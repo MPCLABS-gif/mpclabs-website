@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "860266899184",
+    "project_id": "match-point-coach-hd5pd8",
+    "storage_bucket": "match-point-coach-hd5pd8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860266899184:android:2257df13c46ee0882b0435",
+        "android_client_info": {
+          "package_name": "com.mycompany.matchpointcoach"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "860266899184-2ku2k7apnhr904u3fbj1n370oukou0rv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mycompany.matchpointcoach",
+            "certificate_hash": "b927d3a0ef73b569b23da1bf75b2f8ec6b2a5b9f"
+          }
+        },
+        {
+          "client_id": "860266899184-b146bj05faop986tlun1e597n4n1go7o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mycompany.matchpointcoach",
+            "certificate_hash": "9bbb3186b2189ef16d8f272bdab59362c395cbb4"
+          }
+        },
+        {
+          "client_id": "860266899184-47rp5skvttkncsd5m229tvvpe4ri5394.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_4EReax9OHtILLRYrtzD7bjfqLWLH2Jc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "860266899184-47rp5skvttkncsd5m229tvvpe4ri5394.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "860266899184-q4ki8tvi3kddfe3ckeke6e6eq6691fmu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.matchpointcoach"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
