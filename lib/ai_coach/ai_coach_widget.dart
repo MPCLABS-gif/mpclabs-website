@@ -498,6 +498,33 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                         ]),
                       ),
                       const SizedBox(height: 20),
+                      if (isFree) ...[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: primary.withOpacity(0.2)),
+                          ),
+                          child: Row(children: [
+                            Icon(Icons.info_outline, color: primary, size: 16),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: RichText(
+                                text: TextSpan(
+                                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.4),
+                                  children: [
+                                    const TextSpan(text: 'You have access to '),
+                                    TextSpan(text: '5 free insights', style: TextStyle(fontWeight: FontWeight.w700, color: primary)),
+                                    const TextSpan(text: '. Upgrade to Pro to unlock 13 personalised insights.'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ]),
+                        ),
+                      ],
                       ...freeInsights.map((i) => _buildInsightCard(i, false)),
                       if (proInsights.isNotEmpty) ...[const SizedBox(height: 4), ...proInsights.map((i) => _buildInsightCard(i, isFree))],
                       if (premiumInsights.isNotEmpty) ...[const SizedBox(height: 4), ...premiumInsights.map((i) => _buildInsightCard(i, !isPremium))],

@@ -358,7 +358,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                         'You are winning $winRate% of your matches. Open AI Coach to see what is driving your performance.',
                                         style: TextStyle(
                                             color: Colors.green.shade700,
-                                            fontSize: 12,
+                                            fontSize: 14,
                                             height: 1.4),
                                       ),
                                     ],

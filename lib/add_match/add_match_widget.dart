@@ -408,6 +408,14 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                   const SizedBox(height: 24),
                   FFButtonWidget(
                     onPressed: () async {
+                      if (_model.matchTypeValue == null || _model.matchTypeValue!.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Please select a match type (Tournament or Practice)', style: TextStyle(color: FlutterFlowTheme.of(context).primaryText)),
+                          duration: const Duration(milliseconds: 2500),
+                          backgroundColor: Colors.red.shade400,
+                        ));
+                        return;
+                      }
                       final g1p = int.tryParse(_g1pController.text) ?? 0;
                       final g1o = int.tryParse(_g1oController.text) ?? 0;
                       final g2p = int.tryParse(_g2pController.text) ?? 0;

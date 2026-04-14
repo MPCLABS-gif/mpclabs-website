@@ -92,7 +92,7 @@ class _PremiumWidgetState extends State<PremiumWidget>
           }
         }
         final slowPct = ((slowStarts / total) * 100).round();
-        stat1 = 'You start slow in $slowPct% of your matches';
+        stat1 = slowPct == 0 ? 'No slow starts detected — you begin matches well' : 'You start slow in $slowPct% of your matches';
 
         final tiredMatches =
             matches.where((m) => m.mood?.toLowerCase() == 'tired').toList();
@@ -449,6 +449,27 @@ class _PremiumWidgetState extends State<PremiumWidget>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'What you get for free',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildFreeBullet('Match tracking'),
+                _buildFreeBullet('Core performance analytics'),
+                _buildFreeBullet('5 AI insights'),
+              ],
+            ),
+          ),
           const Text(
             'CHOOSE YOUR PLAN',
             style: TextStyle(
@@ -486,6 +507,25 @@ class _PremiumWidgetState extends State<PremiumWidget>
               'Weekly AI coaching report',
             ],
             isRecommended: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFreeBullet(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.check, color: Colors.white30, size: 13),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white38,
+              fontSize: 13,
+            ),
           ),
         ],
       ),

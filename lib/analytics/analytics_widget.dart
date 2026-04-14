@@ -245,7 +245,7 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
                 _sectionTitle("Performance Under Pressure", icon: Icons.psychology_rounded, iconColor: Colors.purple),
                 const SizedBox(height: 4),
                 Text("How you perform in deciding games and comeback situations",
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade800)),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -265,7 +265,7 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
                         context,
                         "Comebacks",
                         "${lostGame1.length}",
-                        hadGame1Loss == 0 ? "No G1 losses yet" : "Won after losing G1 ${hadGame1Loss > 0 ? (lostGame1.length / hadGame1Loss * 100).round() : 0}% of the time",
+                        lostGame1.isEmpty ? "No comebacks yet" : "Won after losing G1 ${hadGame1Loss > 0 ? (lostGame1.length / hadGame1Loss * 100).round() : 0}% of the time",
                         Icons.trending_up,
                         Colors.teal,
                       ),
@@ -565,28 +565,31 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
   }
 
   Widget _infoCard(BuildContext context, String title, String value, String subtitle, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 6),
-              Text(title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: color)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(value, style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
-          const SizedBox(height: 4),
-          Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
-        ],
+    return IntrinsicHeight(
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 6),
+                Text(title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: color)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(value, style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
+            const SizedBox(height: 4),
+            Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+          ],
+        ),
       ),
     );
   }
