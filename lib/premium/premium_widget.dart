@@ -216,11 +216,26 @@ class _PremiumWidgetState extends State<PremiumWidget>
         return;
       }
       final data = doc.data()!;
-      final discount = (data['discountPercent'] as num?)?.toDouble() ?? 0;
       if (!(data['active'] as bool? ?? false)) {
         setState(() => _referralError = 'This code has expired.');
         return;
       }
+      final maxUses = (data['maxUses'] as num?)?.toInt() ?? 0;
+      final usedCount = (data['usedCount'] as num?)?.toInt() ?? 0;
+      if (maxUses > 0 && usedCount >= maxUses) {
+        setState(() => _referralError = 'This code has reached its maximum uses.');
+        return;
+      }
+      final tier = (data['tier'] as String?) ?? 'any';
+      if (tier != 'any' && tier != _selectedTier) {
+        setState(() => _referralError = 'This code is only valid for ${tier == 'pro' ? 'Pro' : 'Premium'} plans.');
+        return;
+      }
+      final discount = (data['discountPercent'] as num?)?.toDouble() ?? 0;
+      await FirebaseFirestore.instance
+          .collection('referral_codes')
+          .doc(code)
+          .update({'usedCount': usedCount + 1});
       setState(() {
         _referralApplied = true;
         _discountPercent = discount;
