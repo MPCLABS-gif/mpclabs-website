@@ -66,7 +66,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
       key: scaffoldKey,
       backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
       body: StreamBuilder<List<TournamentsRecord>>(
-        stream: currentUser == null
+        stream: currentUser == null || currentUserUid.isEmpty
             ? const Stream.empty()
             : queryTournamentsRecord(
                 queryBuilder: (q) => q.where('ownerUid', isEqualTo: currentUserUid),
@@ -74,7 +74,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
         builder: (context, tournamentSnapshot) {
           final tournamentCount = tournamentSnapshot.data?.length ?? 0;
           return StreamBuilder<List<MatchesRecord>>(
-            stream: currentUser == null
+            stream: currentUser == null || currentUserUid.isEmpty
                 ? const Stream.empty()
                 : queryMatchesRecord(
                     queryBuilder: (q) => q
