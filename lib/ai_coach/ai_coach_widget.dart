@@ -192,12 +192,28 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
     }
 
+    // ── Danger Mood Warning (pro) ──
     if (moodStats.isNotEmpty) {
-      String? worstMood; double worstRate = 1;
+      String? worstMoodPro; double worstRatePro = 1;
       moodStats.forEach((mood, stats) {
-        if (stats["total"]! >= 2) { final rate = stats["wins"]! / stats["total"]!; if (rate < worstRate) { worstRate = rate; worstMood = mood; } }
+        if (stats["total"]! >= 3) {
+          final rate = stats["wins"]! / stats["total"]!;
+          if (rate < worstRatePro) { worstRatePro = rate; worstMoodPro = mood; }
+        }
       });
-      if (worstMood != null && worstRate < 0.5) insights.add({"icon": "⚠️", "title": "Danger Mood Warning", "body": "You only win ${(worstRate * 100).round()}% when feeling ${worstMood}. Focus on mental reset before matches.", "tier": "pro"});
+      final bestMoodForCheck = moodStats.entries.where((e) => e.value["total"]! >= 2).fold<String?>(null, (prev, e) { final r = e.value["wins"]! / e.value["total"]!; return (prev == null || r > (moodStats[prev]!["wins"]! / moodStats[prev]!["total"]!)) ? e.key : prev; });
+      if (worstMoodPro != null && worstMoodPro != bestMoodForCheck && worstRatePro < winRate) {
+        final pct = (worstRatePro * 100).round();
+        String dangerBody;
+        if (worstRatePro < 0.2) {
+          dangerBody = "When you feel $worstMoodPro, your win rate drops to $pct%. This mood is having a strong impact on your results — working on your pre-match mindset could make a big difference.";
+        } else if (worstRatePro < 0.4) {
+          dangerBody = "Your win rate is $pct% when feeling $worstMoodPro. This pattern is worth paying attention to — finding ways to manage this mindset before matches could help your performance.";
+        } else {
+          dangerBody = "You win $pct% when feeling $worstMoodPro, which is lower than your usual level. Being aware of this is the first step to managing it during matches.";
+        }
+        insights.add({"icon": "⚠️", "title": "Danger Mood Warning", "body": dangerBody, "tier": "pro"});
+      }
     }
 
     final tMatches = completed.where((m) => m.matchType == "Tournament").toList();
@@ -259,74 +275,208 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       });
     }
 
-    if (tMatches.isNotEmpty && pMatches.isNotEmpty) {
+    // ── Tournament Performance (pro) ──
+    if (tMatches.length >= 3 && pMatches.length >= 3) {
       final tRate = tMatches.where((m) => _matchWinner(m) == "player").length / tMatches.length;
       final pRate = pMatches.where((m) => _matchWinner(m) == "player").length / pMatches.length;
-      if (tRate < pRate - 0.2) insights.add({"icon": "🏆", "title": "Tournament Pressure", "body": "Tournament win rate ${(tRate * 100).round()}% vs practice ${(pRate * 100).round()}%. Work on mental toughness.", "tier": "pro"});
-      else if (tRate >= pRate) insights.add({"icon": "🏆", "title": "Tournament Beast", "body": "You perform better in tournaments ${(tRate * 100).round()}% than practice ${(pRate * 100).round()}%. You rise to the occasion.", "tier": "pro"});
+      final tPct = (tRate * 100).round();
+      final pPct = (pRate * 100).round();
+      final diff = tRate - pRate;
+      String tournBody;
+      String tournTitle;
+      String tournIcon;
+      if (diff >= 0.2) {
+        tournTitle = "Tournament Advantage"; tournIcon = "🏆";
+        tournBody = "You win $tPct% of your tournament matches compared to $pPct% in practice. You perform strongly in competition — keep building on this edge.";
+      } else if (diff >= 0.1) {
+        tournTitle = "Slight Tournament Edge"; tournIcon = "🏆";
+        tournBody = "Your tournament win rate is $tPct% compared to $pPct% in practice. Competition brings out a little extra in your game — keep building on it.";
+      } else if (diff <= -0.2) {
+        tournTitle = "Tournament Pressure"; tournIcon = "⚡";
+        tournBody = "Your win rate drops from $pPct% in practice to $tPct% in tournaments. The added pressure is affecting your results — working on your preparation before matches could help.";
+      } else if (diff <= -0.1) {
+        tournTitle = "Slight Tournament Pressure"; tournIcon = "⚡";
+        tournBody = "You win $tPct% in tournaments compared to $pPct% in practice. There is a small gap — focusing on consistency could help close it.";
+      } else {
+        tournTitle = ""; tournIcon = ""; tournBody = "";
+      }
+      if (tournBody.isNotEmpty) insights.add({"icon": tournIcon, "title": tournTitle, "body": tournBody, "tier": "pro"});
     }
 
+    // ── Comeback Performance (pro) ──
     final lostG1 = completed.where((m) => m.g1Player < m.g1Opponent).toList();
-    if (lostG1.length >= 2) {
+    if (lostG1.length >= 3) {
       final comebacks = lostG1.where((m) => _matchWinner(m) == "player").length;
       final rate = comebacks / lostG1.length;
-      if (rate >= 0.5) insights.add({"icon": "🔄", "title": "Comeback King", "body": "You win ${(rate * 100).round()}% of matches after losing Game 1. Your resilience is a weapon.", "tier": "pro"});
-      else insights.add({"icon": "🎯", "title": "Start Strong", "body": "When you lose Game 1 you rarely recover (${(rate * 100).round()}% comeback rate). Start with intensity.", "tier": "pro"});
+      final pct = (rate * 100).round();
+      String comebackBody; String comebackTitle; String comebackIcon;
+      if (rate >= 0.7) {
+        comebackTitle = "Comeback King"; comebackIcon = "🔄";
+        comebackBody = "You win $pct% of matches after losing Game 1. You handle pressure well and find ways to turn matches around — a strong competitive edge.";
+      } else if (rate >= 0.5) {
+        comebackTitle = "Strong Comeback"; comebackIcon = "💪";
+        comebackBody = "You recover to win $pct% of matches after losing Game 1. Your resilience is a strength — keep trusting your game when you fall behind.";
+      } else if (rate >= 0.2) {
+        comebackTitle = "Developing Comebacks"; comebackIcon = "🎯";
+        comebackBody = "When you lose Game 1, you recover $pct% of the time. Improving your reset between games could help turn more matches around.";
+      } else {
+        comebackTitle = "Start Strong"; comebackIcon = "⚡";
+        comebackBody = "When you lose Game 1, it is difficult to recover — your comeback rate is $pct%. Focusing on strong starts and between-game adjustments could make a difference.";
+      }
+      insights.add({"icon": comebackIcon, "title": comebackTitle, "body": comebackBody, "tier": "pro"});
     }
 
+    // ── Closing Out Matches (pro) ──
     final wonG1 = completed.where((m) => m.g1Player > m.g1Opponent).toList();
-    if (wonG1.length >= 2) {
+    if (wonG1.length >= 3) {
       final ledLost = wonG1.where((m) => _matchWinner(m) == "opponent").length;
       final ledRate = ledLost / wonG1.length;
-      if (ledRate >= 0.3) insights.add({"icon": "😤", "title": "Closing Problem", "body": "You lose ${(ledRate * 100).round()}% of matches despite winning Game 1. Work on sustaining pressure.", "tier": "pro"});
+      final ledPct = (ledRate * 100).round();
+      String closeBody; String closeTitle;
+      if (ledRate >= 0.5) {
+        closeTitle = "Closing Problem";
+        closeBody = "You are losing $ledPct% of matches after winning Game 1. Closing out matches is proving difficult — maintaining focus and intensity when ahead could make a big difference.";
+      } else if (ledRate >= 0.3) {
+        closeTitle = "Closing Needs Work";
+        closeBody = "You lose $ledPct% of matches after winning Game 1. This is a pattern worth improving — sustaining pressure when you are ahead could help you win more matches.";
+      } else if (ledRate >= 0.15) {
+        closeTitle = "Slight Closing Issue";
+        closeBody = "You occasionally lose matches after winning Game 1 — $ledPct% of the time. Small lapses when ahead can be costly.";
+      } else {
+        closeTitle = ""; closeBody = "";
+      }
+      if (closeBody.isNotEmpty) insights.add({"icon": "😤", "title": closeTitle, "body": closeBody, "tier": "pro"});
     }
 
+    // ── Main Rival (pro) ──
     final opponentCount = <String, int>{};
     for (final m in completed) { if (m.opponentName.isNotEmpty) opponentCount[m.opponentName] = (opponentCount[m.opponentName] ?? 0) + 1; }
     if (opponentCount.isNotEmpty) {
       final rival = opponentCount.entries.reduce((a, b) => a.value >= b.value ? a : b);
-      if (rival.value >= 2) {
+      if (rival.value >= 3) {
         final rivalWins = completed.where((m) => m.opponentName == rival.key && _matchWinner(m) == "player").length;
-        insights.add({"icon": "🆚", "title": "Main Rival", "body": "You have played ${rival.key} ${rival.value} times — winning \$rivalWins of those.", "tier": "pro"});
+        final rivalRate = rivalWins / rival.value;
+        final rivalPct = (rivalRate * 100).round();
+        String rivalBody;
+        if (rivalRate >= 0.7) {
+          rivalBody = "You have played ${rival.key} ${rival.value} times and won $rivalPct% of those matches. You have a strong record in this matchup — keep the consistency.";
+        } else if (rivalRate >= 0.4) {
+          rivalBody = "${rival.key} is your most frequent opponent — you have played ${rival.value} matches and won $rivalPct%. It is a close rivalry — small adjustments could give you the edge.";
+        } else {
+          rivalBody = "You have played ${rival.key} ${rival.value} times and won $rivalPct% of those matches. They currently have the upper hand — reviewing your matches could help you turn this around.";
+        }
+        insights.add({"icon": "🆚", "title": "Main Rival", "body": rivalBody, "tier": "pro"});
       }
     }
 
+    // ── Format Strength (pro) ──
     final doubles = completed.where((m) => m.partnerName.isNotEmpty).toList();
     final singles = completed.where((m) => m.partnerName.isEmpty).toList();
-    if (doubles.length >= 2 && singles.length >= 2) {
+    if (doubles.length >= 3 && singles.length >= 3) {
       final dRate = doubles.where((m) => _matchWinner(m) == "player").length / doubles.length;
       final sRate = singles.where((m) => _matchWinner(m) == "player").length / singles.length;
-      if ((dRate - sRate).abs() >= 0.2) {
-        final better = dRate > sRate ? "doubles" : "singles";
-        insights.add({"icon": "🏸", "title": "Format Strength", "body": "You perform significantly better in \$better. Focus your training time accordingly.", "tier": "pro"});
+      final sPct = (sRate * 100).round();
+      final dPct = (dRate * 100).round();
+      final fDiff = sRate - dRate;
+      String formatBody; String formatTitle;
+      if (fDiff >= 0.2) {
+        formatTitle = "Singles Specialist";
+        formatBody = "You win $sPct% of your singles matches compared to $dPct% in doubles. Singles is your stronger format — keep building on this advantage.";
+      } else if (fDiff >= 0.1) {
+        formatTitle = "Slight Singles Edge";
+        formatBody = "Your singles win rate is $sPct% compared to $dPct% in doubles. You perform slightly better in singles — continue developing both formats.";
+      } else if (fDiff <= -0.2) {
+        formatTitle = "Doubles Specialist";
+        formatBody = "You win $dPct% of your doubles matches compared to $sPct% in singles. Doubles is your stronger format — keep building on this advantage.";
+      } else if (fDiff <= -0.1) {
+        formatTitle = "Slight Doubles Edge";
+        formatBody = "Your doubles win rate is $dPct% compared to $sPct% in singles. You perform slightly better in doubles — continue building across both formats.";
+      } else {
+        formatTitle = ""; formatBody = "";
       }
+      if (formatBody.isNotEmpty) insights.add({"icon": "🏸", "title": formatTitle, "body": formatBody, "tier": "pro"});
     }
 
+    // ── Deciding Game Performance (premium) ──
     final threeSetMatches = completed.where((m) => m.g3Player > 0 || m.g3Opponent > 0).toList();
-    if (threeSetMatches.length >= 2) {
+    if (threeSetMatches.length >= 3) {
       final g3Wins = threeSetMatches.where((m) => _matchWinner(m) == "player").length;
       final g3Rate = g3Wins / threeSetMatches.length;
-      if (g3Rate >= 0.6) insights.add({"icon": "💥", "title": "Decider Specialist", "body": "You win ${(g3Rate * 100).round()}% of Game 3 deciders. Mental strength is your biggest asset.", "tier": "premium"});
-      else if (g3Rate < 0.4) insights.add({"icon": "💥", "title": "Game 3 Struggles", "body": "You only win ${(g3Rate * 100).round()}% of deciding games. Fitness and focus drills should be a priority.", "tier": "premium"});
+      final g3Pct = (g3Rate * 100).round();
+      String g3Body; String g3Title; String g3Icon;
+      if (g3Rate >= 0.7) {
+        g3Title = "Decider Specialist"; g3Icon = "💥";
+        g3Body = "You win $g3Pct% of your deciding games. When matches go the distance, you consistently find a way to come out on top — a strong competitive edge.";
+      } else if (g3Rate >= 0.5) {
+        g3Title = "Strong in Deciders"; g3Icon = "💪";
+        g3Body = "You win $g3Pct% of your deciding games. You handle pressure well — keep building your consistency in close matches.";
+      } else if (g3Rate >= 0.3) {
+        g3Title = "Decider Needs Work"; g3Icon = "🎯";
+        g3Body = "You win $g3Pct% of your deciding games. Close matches are not going your way often enough — improving focus and consistency in the final game could help.";
+      } else {
+        g3Title = "Struggling in Deciders"; g3Icon = "⚡";
+        g3Body = "You win $g3Pct% of your deciding games. When matches reach a final game, results are challenging — focusing on fitness and between-game resets could make a difference.";
+      }
+      insights.add({"icon": g3Icon, "title": g3Title, "body": g3Body, "tier": "premium"});
     }
 
+    // ── Performance Trend (premium) ──
     final sortedByDate = List<MatchesRecord>.from(completed)..sort((a, b) => a.matchDate!.compareTo(b.matchDate!));
     if (sortedByDate.length >= 6) {
-      final half = sortedByDate.length ~/ 2;
-      final earlyRate = sortedByDate.take(half).where((m) => _matchWinner(m) == "player").length / half;
-      final recentRate = sortedByDate.skip(half).where((m) => _matchWinner(m) == "player").length / (sortedByDate.length - half);
-      if (recentRate > earlyRate + 0.1) insights.add({"icon": "📈", "title": "Improving Trend", "body": "Recent win rate ${(recentRate * 100).round()}% is up from earlier ${(earlyRate * 100).round()}%. You are getting better.", "tier": "premium"});
-      else if (recentRate < earlyRate - 0.1) insights.add({"icon": "📉", "title": "Dip in Form", "body": "Recent win rate ${(recentRate * 100).round()}% is down from earlier ${(earlyRate * 100).round()}%. Review what has changed.", "tier": "premium"});
-    }
-
-    if (completed.length >= 5) {
-      final last5Rate = completed.take(5).where((m) => _matchWinner(m) == "player").length / 5;
-      if ((last5Rate - winRate).abs() >= 0.2) {
-        final trend = last5Rate > winRate ? "above" : "below";
-        insights.add({"icon": "🕐", "title": "Recent Form", "body": "Last 5 matches: ${(last5Rate * 100).round()}% win rate — \$trend your career average of ${(winRate * 100).round()}%.", "tier": "premium"});
+      final recentMatches = sortedByDate.reversed.take(5).toList();
+      final earlierMatches = sortedByDate.reversed.skip(5).take(5).toList();
+      if (earlierMatches.isNotEmpty) {
+        final recentRate = recentMatches.where((m) => _matchWinner(m) == "player").length / recentMatches.length;
+        final earlyRate = earlierMatches.where((m) => _matchWinner(m) == "player").length / earlierMatches.length;
+        final trendDiff = recentRate - earlyRate;
+        final recentPct = (recentRate * 100).round();
+        final earlyPct = (earlyRate * 100).round();
+        String trendBody; String trendTitle; String trendIcon;
+        if (trendDiff >= 0.2) {
+          trendTitle = "Strong Improvement"; trendIcon = "📈";
+          trendBody = "Your recent win rate is $recentPct%, up from $earlyPct% earlier. You are improving quickly — keep building on what is working.";
+        } else if (trendDiff >= 0.1) {
+          trendTitle = "Improving Trend"; trendIcon = "📈";
+          trendBody = "Your recent win rate is $recentPct%, slightly ahead of $earlyPct% earlier. You are trending in the right direction — consistency will be key.";
+        } else if (trendDiff <= -0.2) {
+          trendTitle = "Significant Dip"; trendIcon = "📉";
+          trendBody = "Your recent win rate is $recentPct%, down from $earlyPct% earlier. Something has changed — reviewing your recent matches could help identify what to adjust.";
+        } else if (trendDiff <= -0.1) {
+          trendTitle = "Slight Dip in Form"; trendIcon = "📉";
+          trendBody = "Your recent win rate is $recentPct%, slightly down from $earlyPct% earlier. A small dip — reflecting on recent matches could help you get back on track.";
+        } else {
+          trendTitle = ""; trendIcon = ""; trendBody = "";
+        }
+        if (trendBody.isNotEmpty) insights.add({"icon": trendIcon, "title": trendTitle, "body": trendBody, "tier": "premium"});
       }
     }
 
+    // ── Recent Form (premium) ──
+    if (completed.length >= 5) {
+      final last5Rate = completed.take(5).where((m) => _matchWinner(m) == "player").length / 5;
+      final formDiff = last5Rate - winRate;
+      final last5Pct = (last5Rate * 100).round();
+      final careerPct = (winRate * 100).round();
+      String formBody; String formTitle; String formIcon;
+      if (formDiff >= 0.2) {
+        formTitle = "Excellent Recent Form"; formIcon = "🔥";
+        formBody = "Your last 5 matches show a $last5Pct% win rate — well above your overall average of $careerPct%. You are in strong form right now — keep building on it.";
+      } else if (formDiff >= 0.1) {
+        formTitle = "Good Recent Form"; formIcon = "📈";
+        formBody = "Your last 5 matches show a $last5Pct% win rate — ahead of your overall average of $careerPct%. Your recent form is encouraging — keep the momentum going.";
+      } else if (formDiff <= -0.2) {
+        formTitle = "Poor Recent Form"; formIcon = "📉";
+        formBody = "Your last 5 matches show a $last5Pct% win rate — below your overall average of $careerPct%. Your recent form needs attention — reviewing recent matches could help identify what to adjust.";
+      } else if (formDiff <= -0.1) {
+        formTitle = "Slight Dip in Form"; formIcon = "📉";
+        formBody = "Your last 5 matches show a $last5Pct% win rate — slightly below your overall average of $careerPct%. A small dip — focus on getting back to your usual level.";
+      } else {
+        formTitle = ""; formIcon = ""; formBody = "";
+      }
+      if (formBody.isNotEmpty) insights.add({"icon": formIcon, "title": formTitle, "body": formBody, "tier": "premium"});
+    }
+
+    // ── Points Profile (premium) ──
     if (completed.length >= 3) {
       int totalScored = 0, totalConceded = 0, gameCount = 0;
       for (final m in completed) {
@@ -334,18 +484,75 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         if (m.g2Player > 0 || m.g2Opponent > 0) { totalScored += m.g2Player; totalConceded += m.g2Opponent; gameCount++; }
         if (m.g3Player > 0 || m.g3Opponent > 0) { totalScored += m.g3Player; totalConceded += m.g3Opponent; gameCount++; }
       }
-      if (gameCount > 0) insights.add({"icon": "📊", "title": "Points Profile", "body": "Average ${(totalScored / gameCount).toStringAsFixed(1)} scored vs ${(totalConceded / gameCount).toStringAsFixed(1)} conceded per game.", "tier": "premium"});
+      if (gameCount >= 5) {
+        final avgScored = totalScored / gameCount;
+        final avgConceded = totalConceded / gameCount;
+        final ptDiff = avgScored - avgConceded;
+        final scoredStr = avgScored.toStringAsFixed(1);
+        final concededStr = avgConceded.toStringAsFixed(1);
+        String ptBody; String ptTitle;
+        if (ptDiff >= 5) {
+          ptTitle = "Points Dominant";
+          ptBody = "You average $scoredStr points scored vs $concededStr conceded per game. You are controlling the points consistently — your game is in a strong place.";
+        } else if (ptDiff >= 2) {
+          ptTitle = "Competitive Edge";
+          ptBody = "You average $scoredStr points scored vs $concededStr conceded per game. You have a small edge — maintaining consistency in key moments can turn this into more wins.";
+        } else if (ptDiff >= -1) {
+          ptTitle = "Tight Matches";
+          ptBody = "You average $scoredStr points scored vs $concededStr conceded per game. Matches are very close — small moments are deciding the outcome.";
+        } else if (ptDiff >= -4) {
+          ptTitle = "Slightly Behind";
+          ptBody = "You average $scoredStr points scored vs $concededStr conceded per game. Opponents have a slight edge — tightening key areas could help close the gap.";
+        } else {
+          ptTitle = "Points Gap";
+          ptBody = "You average $scoredStr points scored vs $concededStr conceded per game. There is a clear gap — focusing on reducing errors and building consistency could help improve results.";
+        }
+        if (ptDiff.abs() >= 2) insights.add({"icon": "📊", "title": ptTitle, "body": ptBody, "tier": "premium"});
+      }
     }
 
-    if (completed.length >= 4) {
+    // ── Playing Style (premium) ──
+    if (completed.length >= 3) {
       final g1WonCount = completed.where((m) => m.g1Player > m.g1Opponent).length;
-      final aggressiveRate = g1WonCount / completed.length;
-      final style = aggressiveRate >= 0.6 ? "aggressive starter" : aggressiveRate <= 0.4 ? "slow builder" : "balanced player";
-      insights.add({"icon": "🧬", "title": "Playing Style", "body": "Based on your Game 1 patterns, you play as a ${style}. Use this to prepare the right game plan.", "tier": "premium"});
-      final g2Win = completed.where((m) => m.g2Player > m.g2Opponent).length;
-      final g3Played = completed.where((m) => m.g3Player > 0 || m.g3Opponent > 0).toList();
-      final g3Win = g3Played.where((m) => m.g3Player > m.g3Opponent).length;
-      insights.add({"icon": "🎯", "title": "Game-by-Game Breakdown", "body": "G1: ${(g1WonCount / completed.length * 100).round()}% win rate. G2: ${(g2Win / completed.length * 100).round()}%. G3: ${g3Played.isNotEmpty ? (g3Win / g3Played.length * 100).round() : 'N/A'}% (${g3Played.length} played).", "tier": "premium"});
+      final g1StyleRate = g1WonCount / completed.length;
+      final g1StylePct = (g1StyleRate * 100).round();
+      String styleBody; String styleTitle;
+      if (g1StyleRate >= 0.6) {
+        styleTitle = "Aggressive Starter";
+        styleBody = "Based on your match data, you tend to start strongly — winning $g1StylePct% of first games. You set the tone early and apply pressure from the start. Maintaining that level across the match will be key.";
+      } else if (g1StyleRate >= 0.4) {
+        styleTitle = "Balanced Player";
+        styleBody = "Based on your match data, you have a balanced start — winning $g1StylePct% of first games. Matches are often shaped by how you perform in the middle and later stages.";
+      } else {
+        styleTitle = "Slow Builder";
+        styleBody = "Based on your match data, you tend to start slowly — winning $g1StylePct% of first games. Falling behind early can put you under pressure, so improving your opening game could make a difference.";
+      }
+      insights.add({"icon": "🧬", "title": styleTitle, "body": styleBody, "tier": "premium"});
+    }
+
+    // ── Game-by-Game Breakdown (premium) ──
+    if (completed.length >= 5) {
+      final g1Won = completed.where((m) => m.g1Player > m.g1Opponent).length;
+      final g2Won = completed.where((m) => m.g2Player > m.g2Opponent).length;
+      final g3PlayedList = completed.where((m) => m.g3Player > 0 || m.g3Opponent > 0).toList();
+      final g3WonCount = g3PlayedList.where((m) => m.g3Player > m.g3Opponent).length;
+      final g1Pct = (g1Won / completed.length * 100).round();
+      final g2Pct = (g2Won / completed.length * 100).round();
+      final g3Pct = g3PlayedList.isNotEmpty ? (g3WonCount / g3PlayedList.length * 100).round() : null;
+      final g3Str = g3Pct != null ? "$g3Pct%" : "N/A";
+      String primaryLine = "Across your matches, you win $g1Pct% of first games, $g2Pct% of second games, and $g3Str of third games (${g3PlayedList.length} played).";
+      // Identify weakest and strongest — prioritise weakest
+      String contextLine = "";
+      final rates = {"G1": g1Pct, "G2": g2Pct};
+      if (g3PlayedList.length >= 3 && g3Pct != null) rates["G3"] = g3Pct;
+      final weakest = rates.entries.reduce((a, b) => a.value <= b.value ? a : b).key;
+      final strongest = rates.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+      if (weakest == "G1") contextLine = "Your opening game is your weakest area — improving your start could have a big impact.";
+      else if (weakest == "G3") contextLine = "Deciding games are proving the most challenging — focusing on fitness and concentration in the final game could help.";
+      else if (strongest == "G1") contextLine = "You start strongly — maintaining that level across the match could improve your results.";
+      else if (strongest == "G2") contextLine = "You tend to grow into matches — your second game is your strongest.";
+      else if (strongest == "G3") contextLine = "You finish strongly when matches go the distance — a good sign of resilience under pressure.";
+      insights.add({"icon": "🎯", "title": "Game-by-Game Breakdown", "body": "$primaryLine $contextLine".trim(), "tier": "premium"});
     }
 
     return insights;
