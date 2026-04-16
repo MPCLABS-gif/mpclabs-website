@@ -275,7 +275,88 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       });
     }
 
+    // ── Close Game Performance (pro) ──
+    {
+      int closeGamesTotal = 0;
+      int closeGamesWon = 0;
+      int totalGamesPlayed = 0;
+      for (final m in completed) {
+        final games = [
+          [m.g1Player, m.g1Opponent],
+          [m.g2Player, m.g2Opponent],
+          [m.g3Player, m.g3Opponent],
+        ];
+        for (final g in games) {
+          final p = g[0]; final o = g[1];
+          if (p == 0 && o == 0) continue;
+          totalGamesPlayed++;
+          final diff = (p - o).abs();
+          if (diff <= 3) {
+            closeGamesTotal++;
+            if (p > o) closeGamesWon++;
+          }
+        }
+      }
+      if (closeGamesTotal >= 5) {
+        final closeRate = closeGamesWon / closeGamesTotal;
+        final closePct = (closeRate * 100).round();
+        String closeBody; String closeTitle;
+        if (closeRate >= 0.6) {
+          closeTitle = "Close Game Specialist";
+          closeBody = "In close games decided by 3 points or fewer, you win $closePct% of them. You handle tight situations well — this is a strong competitive edge.";
+        } else if (closeRate >= 0.4) {
+          closeTitle = "Competitive in Close Games";
+          closeBody = "In close games decided by 3 points or fewer, you win $closePct% of them. You are competitive in tight moments — small improvements in key points could push this higher.";
+        } else {
+          closeTitle = "Close Games Need Work";
+          closeBody = "In close games decided by 3 points or fewer, you win $closePct% of them. Tight moments are not going your way often enough — improving focus in key points could help.";
+        }
+        final addOn = totalGamesPlayed > 0 && (closeGamesTotal / totalGamesPlayed) >= 0.4
+            ? " A large portion of your games are decided by small margins — improving performance in these moments could significantly impact your results."
+            : "";
+        insights.add({"icon": "⚔️", "title": closeTitle, "body": closeBody + addOn, "tier": "pro"});
+      }
+    }
+
+    // ── Consistency Score (pro) ──
+    if (completed.length >= 8) {
+      final sample = completed.take(10).toList();
+      int switches = 0;
+      for (int i = 0; i < sample.length - 1; i++) {
+        final curr = _matchWinner(sample[i]) == "player";
+        final next = _matchWinner(sample[i + 1]) == "player";
+        if (curr != next) switches++;
+      }
+      final ratio = switches / (sample.length - 1);
+      String consBody; String consTitle;
+      if (ratio <= 0.3) {
+        consTitle = "Consistent Performer";
+        consBody = "Your results are consistent across matches. You maintain a steady level — this kind of reliability is a strong foundation for improvement.";
+      } else if (ratio <= 0.55) {
+        consTitle = "Mixed Consistency";
+        consBody = "Your results show some variation between matches. You have the level — improving consistency could help you perform at your best more often.";
+      } else {
+        consTitle = "Inconsistent Results";
+        consBody = "Your results vary significantly between matches. Inconsistency is affecting your performance — focusing on preparation and routine could help stabilise your game.";
+      }
+      // Add-on: compare recent 5 vs earlier 5 consistency
+      String consAddOn = "";
+      if (completed.length >= 10) {
+        final recent5 = completed.take(5).toList();
+        final earlier5 = completed.skip(5).take(5).toList();
+        int recentSwitches = 0;
+        int earlierSwitches = 0;
+        for (int i = 0; i < 4; i++) {
+          if (_matchWinner(recent5[i]) != _matchWinner(recent5[i+1])) recentSwitches++;
+          if (_matchWinner(earlier5[i]) != _matchWinner(earlier5[i+1])) earlierSwitches++;
+        }
+        if (recentSwitches < earlierSwitches) consAddOn = " Your recent matches are becoming more consistent — keep building on this.";
+      }
+      insights.add({"icon": "📊", "title": consTitle, "body": consBody + consAddOn, "tier": "pro"});
+    }
+
     // ── Tournament Performance (pro) ──
+
     if (tMatches.length >= 3 && pMatches.length >= 3) {
       final tRate = tMatches.where((m) => _matchWinner(m) == "player").length / tMatches.length;
       final pRate = pMatches.where((m) => _matchWinner(m) == "player").length / pMatches.length;
@@ -397,7 +478,80 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (formatBody.isNotEmpty) insights.add({"icon": "🏸", "title": formatTitle, "body": formatBody, "tier": "pro"});
     }
 
+    // ── Match Dominance Profile (premium) ──
+    {
+      int gamesWon = 0;
+      int gamesLost = 0;
+      int totalWinMargin = 0;
+      int totalLossMargin = 0;
+      for (final m in completed) {
+        final games = [
+          [m.g1Player, m.g1Opponent],
+          [m.g2Player, m.g2Opponent],
+          [m.g3Player, m.g3Opponent],
+        ];
+        for (final g in games) {
+          final p = g[0]; final o = g[1];
+          if (p == 0 && o == 0) continue;
+          if (p > o) { gamesWon++; totalWinMargin += (p - o); }
+          else if (o > p) { gamesLost++; totalLossMargin += (o - p); }
+        }
+      }
+      if (gamesWon >= 5) {
+        final avgWinMargin = totalWinMargin / gamesWon;
+        final avgLossMargin = gamesLost > 0 ? totalLossMargin / gamesLost : 0.0;
+        final marginStr = avgWinMargin.toStringAsFixed(1);
+        String domBody; String domTitle;
+        if (avgWinMargin >= 6) {
+          domTitle = "Match Dominator";
+          domBody = "When you win games, you win them by an average of $marginStr points. Your victories are comfortable — you tend to control games.";
+        } else if (avgWinMargin >= 3) {
+          domTitle = "Controlled Winner";
+          domBody = "When you win games, you win them by an average of $marginStr points. Your wins are solid — you stay in control without always dominating.";
+        } else {
+          domTitle = "Narrow Winner";
+          domBody = "When you win games, you win them by an average of $marginStr points. Your wins are tight — improving how you close out games could help you take more control.";
+        }
+        final addOnDom = avgLossMargin >= avgWinMargin
+            ? " You are also losing games by similar or larger margins — reducing errors in those moments could improve your results."
+            : "";
+        insights.add({"icon": "💪", "title": domTitle, "body": domBody + addOnDom, "tier": "premium"});
+      }
+    }
+
+    // ── Performance Under Pressure (premium) ──
+    {
+      int pressureTotal = 0;
+      int pressureWon = 0;
+      for (final m in completed) {
+        final g3Played = m.g3Player > 0 || m.g3Opponent > 0;
+        if (!g3Played) continue;
+        final g3Diff = (m.g3Player - m.g3Opponent).abs();
+        if (g3Diff <= 3) {
+          pressureTotal++;
+          if (_matchWinner(m) == "player") pressureWon++;
+        }
+      }
+      if (pressureTotal >= 3) {
+        final pressRate = pressureWon / pressureTotal;
+        final pressPct = (pressRate * 100).round();
+        String pressBody; String pressTitle;
+        if (pressRate >= 0.6) {
+          pressTitle = "Clutch Performer";
+          pressBody = "In matches decided by tight final games, you win $pressPct% of the time. You perform well in decisive moments — a strong competitive edge.";
+        } else if (pressRate >= 0.4) {
+          pressTitle = "Competitive Under Pressure";
+          pressBody = "In matches decided by tight final games, you win $pressPct% of the time. You compete well under pressure — small improvements in key moments could make a difference.";
+        } else {
+          pressTitle = "Pressure Needs Work";
+          pressBody = "In matches decided by tight final games, you win $pressPct% of the time. Tight matches are not going your way often enough — improving focus in decisive moments could help.";
+        }
+        insights.add({"icon": "🎯", "title": pressTitle, "body": pressBody, "tier": "premium"});
+      }
+    }
+
     // ── Deciding Game Performance (premium) ──
+
     final threeSetMatches = completed.where((m) => m.g3Player > 0 || m.g3Opponent > 0).toList();
     if (threeSetMatches.length >= 3) {
       final g3Wins = threeSetMatches.where((m) => _matchWinner(m) == "player").length;
