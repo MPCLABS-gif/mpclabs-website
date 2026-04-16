@@ -101,16 +101,19 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     final wins = completed.where((m) => _matchWinner(m) == "player").length;
     final winRate = wins / completed.length;
 
+    // ── Win Rate (free) ──
     if (completed.length < 5) {
       final remaining = 5 - completed.length;
       final remainingLabel = remaining == 1 ? "1 more match" : "$remaining more matches";
       insights.add({"icon": "🏸", "title": "Getting Started", "body": "We are learning your game. Play $remainingLabel to unlock your first coaching report.", "progress": completed.length, "tier": "free"});
     } else if (winRate >= 0.7) {
-      insights.add({"icon": "🔥", "title": "Excellent Win Rate", "body": "Across ${completed.length} matches, you are winning ${(winRate * 100).round()}%. That is a strong record — keep the consistency.", "tier": "free"});
+      insights.add({"icon": "🔥", "title": "Strong Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches — that puts you in the top tier of players tracking their game. The challenge now is not just winning, it is raising your own bar.", "tier": "free"});
     } else if (winRate >= 0.5) {
-      insights.add({"icon": "📈", "title": "Positive Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your matches. You are on the right track — focus on closing out tight games.", "tier": "free"});
+      insights.add({"icon": "📈", "title": "Positive Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. You win more than you lose — but the margins are tight. The players who break through at this level learn to close out the games they are already winning.", "tier": "free"});
+    } else if (winRate > 0.2) {
+      insights.add({"icon": "💪", "title": "Developing Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. Right now the losses outweigh the wins — but you are here, tracking, analysing, improving. That is what separates players who plateau from players who break through.", "tier": "free"});
     } else {
-      insights.add({"icon": "💪", "title": "Room to Grow", "body": "You are winning ${(winRate * 100).round()}% of matches so far. Every loss is a lesson — focus on one improvement at a time.", "tier": "free"});
+      insights.add({"icon": "🌱", "title": "Early Stage", "body": "At ${(winRate * 100).round()}%, you are still finding your rhythm. Keep playing, keep tracking, and focus on small improvements each match.", "tier": "free"});
     }
 
     final moodStats = <String, Map<String, int>>{};
@@ -120,18 +123,74 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       moodStats[m.mood]!["total"] = moodStats[m.mood]!["total"]! + 1;
       if (_matchWinner(m) == "player") moodStats[m.mood]!["wins"] = moodStats[m.mood]!["wins"]! + 1;
     }
+    // ── Peak Performance Mood (free) ──
     if (moodStats.isNotEmpty) {
       String? bestMood; double bestRate = 0;
+      String? worstMoodFree; double worstRateFree = 1;
       moodStats.forEach((mood, stats) {
-        if (stats["total"]! >= 2) { final rate = stats["wins"]! / stats["total"]!; if (rate > bestRate) { bestRate = rate; bestMood = mood; } }
+        if (stats["total"]! >= 2) {
+          final rate = stats["wins"]! / stats["total"]!;
+          if (rate > bestRate) { bestRate = rate; bestMood = mood; }
+          if (rate < worstRateFree) { worstRateFree = rate; worstMoodFree = mood; }
+        }
       });
-      if (bestMood != null) insights.add({"icon": "🧠", "title": "Peak Performance Mood", "body": "You perform best when feeling ${bestMood} — winning ${(bestRate * 100).round()}% of those matches.", "tier": "free"});
+      if (bestMood != null) {
+        final pct = (bestRate * 100).round();
+        String moodBody;
+        if (bestRate >= 0.7) {
+          moodBody = "You perform very strongly when feeling $bestMood, winning $pct% of those matches. Try to bring that mindset into every match.";
+        } else if (bestRate >= 0.4) {
+          moodBody = "You perform best when feeling $bestMood, winning $pct% of those matches. Try to recreate that mindset before your next game.";
+        } else {
+          moodBody = "You perform slightly better when feeling $bestMood, but results are still building. Focus on consistency across all matches.";
+        }
+        insights.add({"icon": "🧠", "title": "Peak Performance Mood", "body": moodBody, "tier": "free"});
+        if (worstMoodFree != null && worstMoodFree != bestMood && worstRateFree < 0.5) {
+          insights.add({"icon": "⚡", "title": "Mood to Watch", "body": "When feeling $worstMoodFree, your results tend to drop. Being aware of this can help you manage your mindset during matches.", "tier": "free"});
+        }
+      } else {
+        insights.add({"icon": "🧠", "title": "Peak Performance Mood", "body": "You have not played enough matches in each mood yet to identify a clear pattern.", "tier": "free"});
+      }
     }
 
-    int streak = 0;
-    for (final m in completed) { if (_matchWinner(m) == "player") streak++; else break; }
-    if (streak >= 3) insights.add({"icon": "🔥", "title": "On Fire!", "body": "You are on a ${streak} match winning streak. Ride this momentum.", "tier": "free"});
-    else if (streak == 0 && completed.length >= 3) insights.add({"icon": "🔄", "title": "Reset Mode", "body": "Your last match was a loss. Review what happened and come back sharper.", "tier": "free"});
+    // ── On Fire / Reset Mode (free) ──
+    {
+      int winStreak = 0;
+      int loseStreak = 0;
+      for (final m in completed) {
+        if (_matchWinner(m) == "player") { winStreak++; loseStreak = 0; }
+        else { loseStreak++; winStreak = 0; }
+      }
+      // completed is ordered descending so first entry = most recent
+      // recalculate streaks from most recent
+      int wStreak = 0;
+      int lStreak = 0;
+      for (final m in completed) {
+        if (wStreak == 0 && lStreak == 0) {
+          if (_matchWinner(m) == "player") wStreak++;
+          else lStreak++;
+        } else if (wStreak > 0) {
+          if (_matchWinner(m) == "player") wStreak++;
+          else break;
+        } else {
+          if (_matchWinner(m) == "opponent") lStreak++;
+          else break;
+        }
+      }
+      if (wStreak >= 5) {
+        insights.add({"icon": "🔥", "title": "On Fire!", "body": "$wStreak wins in a row. You are in top form right now — this is a great time to push yourself against stronger opponents.", "tier": "free"});
+      } else if (wStreak >= 3) {
+        insights.add({"icon": "🔥", "title": "On Fire!", "body": "$wStreak match winning streak. Your game is in a good place — keep the momentum going.", "tier": "free"});
+      } else if (wStreak == 2) {
+        insights.add({"icon": "📈", "title": "Early Momentum", "body": "You have won two matches in a row. Momentum is starting to build — keep it going.", "tier": "free"});
+      } else if (lStreak >= 3) {
+        insights.add({"icon": "🔄", "title": "Losing Streak", "body": "$lStreak losses in a row. It might be time to adjust your approach — small changes can help turn results around.", "tier": "free"});
+      } else if (lStreak >= 1) {
+        insights.add({"icon": "🔄", "title": "Bounce Back Time", "body": "Your last match was a loss. One result does not define your form — focus on your next match.", "tier": "free"});
+      } else if (wStreak == 1) {
+        insights.add({"icon": "✅", "title": "Winning Momentum", "body": "You won your last match. A good result — build on this in your next game.", "tier": "free"});
+      }
+    }
 
     if (moodStats.isNotEmpty) {
       String? worstMood; double worstRate = 1;
@@ -147,11 +206,27 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     if (completed.length >= 2) {
       final now = DateTime.now();
       final last30 = completed.where((m) => m.matchDate != null && now.difference(m.matchDate!).inDays <= 30).length;
-      final freq = last30 >= 4 ? "great" : last30 >= 2 ? "steady" : "low";
+      final prev15 = completed.where((m) => m.matchDate != null && now.difference(m.matchDate!).inDays > 15 && now.difference(m.matchDate!).inDays <= 30).length;
+      final recent15 = completed.where((m) => m.matchDate != null && now.difference(m.matchDate!).inDays <= 15).length;
+      String freqBody;
+      if (last30 >= 6) {
+        freqBody = "You have played $last30 matches in the last 30 days. You are playing regularly — this level of consistency supports steady improvement. Make sure you are recovering well between matches.";
+      } else if (last30 >= 4) {
+        freqBody = "You have played $last30 matches in the last 30 days. Good consistency — regular play like this helps you build and maintain your level.";
+      } else if (last30 >= 2) {
+        freqBody = "You have played $last30 matches in the last 30 days. A steady start — try to increase your frequency to keep your game sharp.";
+      } else if (last30 == 1) {
+        freqBody = "You have played 1 match in the last 30 days. Playing more regularly will help you improve faster — even one extra match per week can make a difference.";
+      } else {
+        freqBody = "No matches recorded in the last 30 days. Getting back on court is the most important step to improving your game.";
+      }
+      String trendAdd = "";
+      if (recent15 > prev15 && prev15 > 0) trendAdd = " You have been more active recently — keep this rhythm going.";
+      else if (prev15 > recent15 && recent15 < prev15) trendAdd = " Your recent activity has dropped — getting back into a routine will help.";
       insights.add({
         "icon": "📅",
         "title": "Match Frequency",
-        "body": "You have played $last30 ${last30 == 1 ? 'match' : 'matches'} in the last 30 days. ${freq == 'great' ? 'Great consistency — keep it up.' : freq == 'steady' ? 'Steady rhythm. Try to play more regularly.' : 'Playing more often will accelerate your improvement.'}",
+        "body": freqBody + trendAdd,
         "tier": "free"
       });
     }
@@ -162,10 +237,24 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       final pCount = completed.where((m) => m.matchType == "Practice").length;
       final tPct = ((tCount / completed.length) * 100).round();
       final pPct = ((pCount / completed.length) * 100).round();
+      String balanceBody;
+      if (tCount == completed.length) {
+        balanceBody = "All your recorded matches are tournaments. Adding practice sessions will help you refine your game between competitions.";
+      } else if (pCount == completed.length) {
+        balanceBody = "All your recorded matches are practice. Competition is where your game gets tested — consider entering a tournament to challenge yourself.";
+      } else if (tPct >= 70) {
+        balanceBody = "Your matches are $tPct% tournaments and $pPct% practice. You are getting strong competitive exposure — make sure you balance it with practice to keep improving your game.";
+      } else if (pPct >= 70) {
+        balanceBody = "Your matches are $pPct% practice and $tPct% tournaments. You are building a solid base — start testing your game more in competition.";
+      } else if (completed.length < 5) {
+        balanceBody = "You have not logged many matches yet. Keep tracking to get a clearer view of your playing patterns.";
+      } else {
+        balanceBody = "Your matches are well balanced between practice and tournaments. You are developing your game and testing it — keep this balance going.";
+      }
       insights.add({
         "icon": "⚖️",
         "title": "Match Balance",
-        "body": "Your matches are $tPct% Tournament and $pPct% Practice. ${tPct > 70 ? 'More practice sessions will help you refine your game.' : pPct > 70 ? 'Great training base — start entering more tournaments.' : 'Good balance between competition and training.'}",
+        "body": balanceBody,
         "tier": "free"
       });
     }
