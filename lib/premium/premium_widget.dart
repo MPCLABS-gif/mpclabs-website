@@ -520,6 +520,7 @@ class _PremiumWidgetState extends State<PremiumWidget>
               'Game-by-game breakdown',
               'Improving trend & recent form',
               'Weekly AI coaching report',
+              '* Unlocks after free trial',
             ],
             isRecommended: true,
           ),
@@ -860,7 +861,7 @@ class _PremiumWidgetState extends State<PremiumWidget>
         ),
         const SizedBox(height: 10),
         const Text(
-          '7-day free trial • Cancel anytime',
+          '5-day free trial • Cancel anytime',
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.white38, fontSize: 12),
         ),
