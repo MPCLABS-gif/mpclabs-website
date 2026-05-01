@@ -559,6 +559,21 @@ class _PlayerProfileWidgetState extends State<PlayerProfileWidget> {
                       ),
                     ),
 
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () => _confirmDeleteAccount(context),
+                      icon: const Icon(Icons.delete_forever_rounded, size: 18),
+                      label: const Text('Delete Account',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(color: Colors.red.shade300),
+                        foregroundColor: Colors.red.shade400,
+                      ),
+                    ),
+
                     StreamBuilder<List<MatchesRecord>>(
                       stream: queryMatchesRecord(
                         queryBuilder: (q) => q.where('ownerUid',
@@ -765,6 +780,66 @@ class _PlayerProfileWidgetState extends State<PlayerProfileWidget> {
         ],
       ),
     );
+  }
+
+  void _confirmDeleteAccount(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+            'This will permanently delete your account and all match data. This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _deleteAccount(context);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final uid = user.uid;
+    try {
+      // Delete all matches
+      final matches = await FirebaseFirestore.instance
+          .collection('matches')
+          .where('ownerUid', isEqualTo: uid)
+          .get();
+      for (final doc in matches.docs) {
+        await doc.reference.delete();
+      }
+      // Delete user profile
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .delete();
+      // Delete Firebase Auth account
+      await user.delete();
+      if (context.mounted) {
+        context.goNamed(RegisterPage.routeName);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting account: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _fieldLabel(String label) {
