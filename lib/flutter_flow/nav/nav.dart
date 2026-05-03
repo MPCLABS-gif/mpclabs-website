@@ -18,6 +18,8 @@ import '/flutter_flow/flutter_flow_util.dart';
 import 'serialization_util.dart';
 
 import '/index.dart';
+import '/onboarding/onboarding_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 export 'package:go_router/go_router.dart';
 export 'serialization_util.dart';
@@ -90,8 +92,7 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) =>
-              appStateNotifier.loggedIn ? HomePageWidget() : RegisterPage(),
+          builder: (context, _) => _InitialPage(appStateNotifier: appStateNotifier),
         ),
         FFRoute(
           name: HomePageWidget.routeName,
@@ -134,6 +135,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => const TournamentCalendarWidget(),
         ),
         FFRoute(
+          name: OnboardingWidget.routeName,
+          path: OnboardingWidget.routePath,
+          builder: (context, params) => const OnboardingWidget(),
+        ),
+        FFRoute(
           name: RegisterPage.routeName,
           path: RegisterPage.routePath,
           builder: (context, params) => const RegisterPage(),
@@ -162,6 +168,42 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );
+
+class _InitialPage extends StatefulWidget {
+  final AppStateNotifier appStateNotifier;
+  const _InitialPage({required this.appStateNotifier});
+
+  @override
+  State<_InitialPage> createState() => _InitialPageState();
+}
+
+class _InitialPageState extends State<_InitialPage> {
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboarding();
+  }
+
+  Future<void> _checkOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
+    if (!mounted) return;
+    if (!onboardingComplete && !widget.appStateNotifier.loggedIn) {
+      context.goNamed(OnboardingWidget.routeName);
+    } else if (widget.appStateNotifier.loggedIn) {
+      context.goNamed(HomePageWidget.routeName);
+    } else {
+      context.goNamed(RegisterPage.routeName);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+    );
+  }
+}
 
 extension NavParamExtensions on Map<String, String?> {
   Map<String, String> get withoutNulls => Map.fromEntries(
