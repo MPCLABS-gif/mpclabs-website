@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -860,10 +861,10 @@ class _PremiumWidgetState extends State<PremiumWidget>
           ),
         ),
         const SizedBox(height: 10),
-        const Text(
-          '5-day free trial • Cancel anytime',
+        Text(
+          Platform.isIOS ? '3-day free trial • Cancel anytime' : '5-day free trial • Cancel anytime',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white38, fontSize: 12),
+          style: const TextStyle(color: Colors.white38, fontSize: 12),
         ),
       ]),
     );

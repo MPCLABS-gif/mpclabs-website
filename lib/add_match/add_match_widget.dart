@@ -22,7 +22,7 @@ class AddMatchWidget extends StatefulWidget {
 class _AddMatchWidgetState extends State<AddMatchWidget> {
   late AddMatchModel _model;
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  String _mode = 'live';
+  String _mode = 'result';
   String? _selectedMood;
   String _scoringFormat = '21';
   final _g1pController = TextEditingController();
