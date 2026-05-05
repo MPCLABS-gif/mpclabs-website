@@ -37,11 +37,11 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     try {
       final status = await _premiumService.getSubscriptionStatus().timeout(
         const Duration(seconds: 5),
-        onTimeout: () => {'tier': 'free'},
+        onTimeout: () => {'status': 'free'},
       );
       if (mounted) {
         setState(() {
-          _tier = status['tier'] as String;
+          _tier = status['status'] as String;
           _loadingStatus = false;
         });
       }
@@ -763,22 +763,38 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           )),
         ],
         if (isLocked && !isGettingStarted) ...[
-          const SizedBox(height: 12),
-          SizedBox(width: double.infinity, child: ElevatedButton(
-            onPressed: () => context.goNamed(PremiumWidget.routeName),
-            style: ElevatedButton.styleFrom(backgroundColor: accentColor, padding: const EdgeInsets.symmetric(vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            child: Text(tier == "premium" ? "Unlock Premium" : "Unlock Pro", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-          )),
         ],
       ]),
     );
     if (!isLocked) return card;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Stack(children: [
-        ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 4, sigmaY: 4), child: card),
-        Positioned.fill(child: Container(decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12)))),
-      ]),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(children: [
+            ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 4, sigmaY: 4), child: card),
+            Positioned.fill(child: Container(decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12)))),
+          ]),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => context.goNamed(PremiumWidget.routeName),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accentColor,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(
+              "See this insight →",
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 
@@ -979,6 +995,41 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                       if (proInsights.isNotEmpty) ...[const SizedBox(height: 4), ...proInsights.map((i) => _buildInsightCard(i, isFree))],
                       if (premiumInsights.isNotEmpty) ...[const SizedBox(height: 4), ...premiumInsights.map((i) => _buildInsightCard(i, !isPremium))],
                       if (isFree) ...[const SizedBox(height: 8), _buildBlurredPreviewBanner(blurredInsights, completed.length)],
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F0FF),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFD4C5F9), width: 1),
+                          ),
+                          child: const Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('📈', style: TextStyle(fontSize: 22)),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'More matches, more insights',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF3D1F7A)),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'The more you track, the smarter your coach gets. Keep logging matches to unlock more personalised insights.',
+                                      style: TextStyle(fontSize: 12, color: Color(0xFF5A4080), height: 1.4),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 32),
                     ],
                   );
