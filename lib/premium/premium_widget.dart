@@ -4,6 +4,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 
 import '/backend/schema/matches_record.dart';
@@ -948,6 +949,22 @@ class _PremiumWidgetState extends State<PremiumWidget>
             _isRestoring ? 'Restoring…' : 'Restore purchases',
             style: const TextStyle(color: Colors.white38, fontSize: 13),
           ),
+        ),
+
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: () => launchUrl(Uri.parse('https://mpclabs-gif.github.io/mpc-privacy/')),
+              child: const Text('Privacy Policy', style: TextStyle(color: Colors.white38, fontSize: 12, decoration: TextDecoration.underline, decorationColor: Colors.white38)),
+            ),
+            const Text('  ·  ', style: TextStyle(color: Colors.white24, fontSize: 12)),
+            GestureDetector(
+              onTap: () => launchUrl(Uri.parse('https://mpclabs-gif.github.io/mpc-privacy/terms.html')),
+              child: const Text('Terms of Use', style: TextStyle(color: Colors.white38, fontSize: 12, decoration: TextDecoration.underline, decorationColor: Colors.white38)),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         const Text(
