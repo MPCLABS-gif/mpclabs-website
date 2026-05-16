@@ -48,13 +48,15 @@ class MatchHeadlineEngine {
   }
 
   static bool _isCleanSweep(MatchesRecord match, bool playerWon) {
+    final target = match.scoringFormat == '15' ? 15 : 21;
+    final cap = target == 15 ? 17 : 30;
     if (playerWon) {
-      return _gameWon(match.g1Player, match.g1Opponent) &&
-          _gameWon(match.g2Player, match.g2Opponent) &&
+      return _gameWon(match.g1Player, match.g1Opponent, target, cap) &&
+          _gameWon(match.g2Player, match.g2Opponent, target, cap) &&
           match.g3Player == 0 && match.g3Opponent == 0;
     } else {
-      return _gameWon(match.g1Opponent, match.g1Player) &&
-          _gameWon(match.g2Opponent, match.g2Player) &&
+      return _gameWon(match.g1Opponent, match.g1Player, target, cap) &&
+          _gameWon(match.g2Opponent, match.g2Player, target, cap) &&
           match.g3Player == 0 && match.g3Opponent == 0;
     }
   }
@@ -62,14 +64,16 @@ class MatchHeadlineEngine {
   static bool _cameBackFromGameDown(MatchesRecord match, bool playerWon) {
     if (!playerWon) return false;
     // Lost game 1, won games 2 and 3
-    return _gameWon(match.g1Opponent, match.g1Player) &&
-        _gameWon(match.g2Player, match.g2Opponent) &&
-        _gameWon(match.g3Player, match.g3Opponent);
+    final target = match.scoringFormat == '15' ? 15 : 21;
+    final cap = target == 15 ? 17 : 30;
+    return _gameWon(match.g1Opponent, match.g1Player, target, cap) &&
+        _gameWon(match.g2Player, match.g2Opponent, target, cap) &&
+        _gameWon(match.g3Player, match.g3Opponent, target, cap);
   }
 
-  static bool _gameWon(int a, int b) {
-    if (a >= 30) return true;
-    return a >= 21 && (a - b) >= 2;
+  static bool _gameWon(int a, int b, [int target = 21, int cap = 30]) {
+    if (a >= cap) return true;
+    return a >= target && (a - b) >= 2;
   }
 }
 
@@ -245,7 +249,7 @@ class ShareCardWidget extends StatelessWidget {
           const SizedBox(height: 16),
 
           // ── Score by Game ──
-          ...scores.map((s) => _scoreRow(s[0], s[1], s[2])),
+          ...scores.map((s) => _scoreRow(s[0], s[1], s[2], match.scoringFormat == '15' ? 15 : 21)),
 
           const SizedBox(height: 20),
 
@@ -312,8 +316,9 @@ class ShareCardWidget extends StatelessWidget {
     return result;
   }
 
-  Widget _scoreRow(String label, int p, int o) {
-    final pWon = (p >= 21 && (p - o) >= 2) || p >= 30;
+  Widget _scoreRow(String label, int p, int o, [int target = 21]) {
+    final cap = target == 15 ? 17 : 30;
+    final pWon = (p >= target && (p - o) >= 2) || p >= cap;
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(

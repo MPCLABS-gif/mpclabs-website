@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/index.dart';
 import '/services/premium_service.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import '/premium/premium_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -35,22 +36,42 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
   Future<void> _loadStatus() async {
     try {
-      final status = await _premiumService.getSubscriptionStatus().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => {'status': 'free'},
-      );
+      // Check RevenueCat first for live entitlement status
+      final customerInfo = await Purchases.getCustomerInfo();
+      final entitlements = customerInfo.entitlements.active;
       if (mounted) {
         setState(() {
-          _tier = status['status'] as String;
+          if (entitlements.containsKey('premium')) {
+            _tier = 'premium';
+          } else if (entitlements.containsKey('pro')) {
+            _tier = 'pro';
+          } else {
+            _tier = 'free';
+          }
           _loadingStatus = false;
         });
       }
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _tier = 'free';
-          _loadingStatus = false;
-        });
+      // Fallback to Firestore
+      try {
+        final status = await _premiumService.getSubscriptionStatus().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => {'status': 'free'},
+        );
+        if (mounted) {
+          setState(() {
+            final rawStatus = status['status'] as String;
+            _tier = (rawStatus == 'inactive' || rawStatus == 'locked' || rawStatus == 'expired') ? 'free' : rawStatus;
+            _loadingStatus = false;
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _tier = 'free';
+            _loadingStatus = false;
+          });
+        }
       }
     }
   }
@@ -757,7 +778,15 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           Text("Your AI coach unlocks after 5 matches", style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
           const SizedBox(height: 12),
           SizedBox(width: double.infinity, child: ElevatedButton(
-            onPressed: () => context.goNamed(PremiumWidget.routeName),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PremiumWidget()),
+              );
+              if (mounted) {
+                await Future.delayed(const Duration(seconds: 2));
+                _loadStatus();
+              }
+            },
             style: ElevatedButton.styleFrom(backgroundColor: accentColor, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
             child: Text("Start building my coaching report", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
           )),
@@ -781,7 +810,15 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () => context.goNamed(PremiumWidget.routeName),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PremiumWidget()),
+              );
+              if (mounted) {
+                await Future.delayed(const Duration(seconds: 2));
+                _loadStatus();
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: accentColor,
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -884,7 +921,15 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
           child: ElevatedButton(
-            onPressed: () => context.goNamed(PremiumWidget.routeName),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PremiumWidget()),
+              );
+              if (mounted) {
+                await Future.delayed(const Duration(seconds: 2));
+                _loadStatus();
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: matchCount >= 5 ? const Color(0xFF7B2FBE) : const Color(0xFF3d1a6e),
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -991,7 +1036,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                           ]),
                         ),
                       ],
-                      ...freeInsights.map((i) => _buildInsightCard(i, false)),
+                      ...( isFree ? freeInsights.take(5).toList() : freeInsights).map((i) => _buildInsightCard(i, false)),
                       if (proInsights.isNotEmpty) ...[const SizedBox(height: 4), ...proInsights.map((i) => _buildInsightCard(i, isFree))],
                       if (premiumInsights.isNotEmpty) ...[const SizedBox(height: 4), ...premiumInsights.map((i) => _buildInsightCard(i, !isPremium))],
                       if (isFree) ...[const SizedBox(height: 8), _buildBlurredPreviewBanner(blurredInsights, completed.length)],
@@ -1005,7 +1050,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: const Color(0xFFD4C5F9), width: 1),
                           ),
-                          child: const Row(
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('📈', style: TextStyle(fontSize: 22)),
@@ -1015,12 +1060,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'More matches, more insights',
+                                      isFree ? 'Unlock more insights' : 'More matches, more insights',
                                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF3D1F7A)),
                                     ),
                                     SizedBox(height: 4),
                                     Text(
-                                      'The more you track, the smarter your coach gets. Keep logging matches to unlock more personalised insights.',
+                                      isFree
+                                        ? 'You have 5 free insights. Upgrade to Pro or Premium to unlock up to 21 personalised insights.'
+                                        : isPremium
+                                          ? 'You are getting the full picture — keep logging to sharpen your insights.'
+                                          : 'Keep logging matches to get more personalised coaching from your data.',
                                       style: TextStyle(fontSize: 12, color: Color(0xFF5A4080), height: 1.4),
                                     ),
                                   ],

@@ -584,18 +584,20 @@ class _PlayerProfileWidgetState extends State<PlayerProfileWidget> {
                         int wins = 0;
                         for (final m in matches) {
                           int pg = 0, og = 0;
+                          final target = m.scoringFormat == '15' ? 15 : 21;
+                          final cap = target == 15 ? 17 : 30;
                           for (final pair in [
                             [m.g1Player, m.g1Opponent],
                             [m.g2Player, m.g2Opponent],
                             [m.g3Player, m.g3Opponent]
                           ]) {
-                            if ((pair[0] >= 21 &&
+                            if ((pair[0] >= target &&
                                     (pair[0] - pair[1]) >= 2) ||
-                                pair[0] >= 30) {
+                                pair[0] >= cap) {
                               pg++;
-                            } else if ((pair[1] >= 21 &&
+                            } else if ((pair[1] >= target &&
                                     (pair[1] - pair[0]) >= 2) ||
-                                pair[1] >= 30) {
+                                pair[1] >= cap) {
                               og++;
                             }
                           }

@@ -38,6 +38,8 @@ class _HomePageWidgetState extends State<HomePageWidget> {
   }
 
   String? _matchWinner(MatchesRecord match) {
+    final target = match.scoringFormat == '15' ? 15 : 21;
+    final cap = target == 15 ? 17 : 30;
     int playerGames = 0;
     int opponentGames = 0;
     for (final pair in [
@@ -47,9 +49,9 @@ class _HomePageWidgetState extends State<HomePageWidget> {
     ]) {
       final p = pair[0];
       final o = pair[1];
-      if ((p >= 21 && (p - o) >= 2) || p >= 30) {
+      if ((p >= target && (p - o) >= 2) || p >= cap) {
         playerGames++;
-      } else if ((o >= 21 && (o - p) >= 2) || o >= 30) {
+      } else if ((o >= target && (o - p) >= 2) || o >= cap) {
         opponentGames++;
       }
     }

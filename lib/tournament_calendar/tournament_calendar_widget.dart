@@ -511,18 +511,20 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
                           style: TextStyle(fontSize: 11, color: Colors.orange.shade600, fontWeight: FontWeight.w500)),
                     ],
                   ),
+                  if (!isPast) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: urgencyColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(urgencyText, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: urgencyColor)),
+                    ),
+                  ],
                 ],
               ),
             ),
-            if (!isPast)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: urgencyColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(urgencyText, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: urgencyColor)),
-              ),
           ],
         ),
       ),
