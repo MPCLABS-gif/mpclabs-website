@@ -663,7 +663,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          '${match.playerName} vs ${match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")}',
+                                          '${match.playerName} vs ${match.opponentName}',
                                           style: GoogleFonts.inter(
                                               fontWeight: FontWeight.w600,
                                               fontSize: 14),

@@ -125,7 +125,7 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
       final opponentTotal = gamesWon['opponent']! + (isPlayer ? 0 : 1);
 
       if (playerTotal >= 2 || opponentTotal >= 2) {
-        final winner = playerTotal >= 2 ? match.playerName : match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ");
+        final winner = playerTotal >= 2 ? match.playerName : match.opponentName;
         await widget.matchRef!.update(mapToFirestore({
           'matchWinner': winner,
           'matchCompleted': true,
@@ -351,8 +351,8 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
 
         String matchStatusText = 'Game $currentGame';
         if (matchOver) {
-          final winner = playerWon ? match.playerName : match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ");
-          matchStatusText = playerWon ? '${match.playerName} wins the match! 🏆' : 'Tough match — ${match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")} won this one';
+          final winner = playerWon ? match.playerName : match.opponentName;
+          matchStatusText = playerWon ? '${match.playerName} wins the match! 🏆' : 'Tough match. ${match.opponentName} won this one';
         }
 
         return GestureDetector(
@@ -408,7 +408,7 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                               Expanded(
                                   child: Text(
                                       match.partnerName.isNotEmpty
-                                          ? '\${match.playerName} & \${match.partnerName}'
+                                          ? '${match.playerName} & ${match.partnerName}'
                                           : match.playerName,
                                       style: GoogleFonts.inter(
                                           fontWeight: FontWeight.bold,
@@ -435,8 +435,8 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                               Expanded(
                                   child: Text(
                                       match.opponentPartnerName.isNotEmpty
-                                          ? '${match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")} & ${match.opponentPartnerName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")}'
-                                          : match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" "),
+                                          ? '${match.opponentName} & ${match.opponentPartnerName}'
+                                          : match.opponentName,
                                       style: GoogleFonts.inter(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16),
@@ -528,8 +528,8 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                               disabled: buttonsDisabled,
                             ),
                             _buildScoreButton(
-                              label: match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ").isNotEmpty
-                                  ? match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ").split(' ')[0]
+                              label: match.opponentName.isNotEmpty
+                                  ? match.opponentName.split(' ')[0]
                                   : 'Opponent',
                               onTap: () =>
                                   _incrementScore(match, false),

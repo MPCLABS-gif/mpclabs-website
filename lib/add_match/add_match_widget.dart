@@ -210,6 +210,38 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                     ownerUid: currentUserUid,
                     theme: FlutterFlowTheme.of(context),
                   ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Text('Opponent Handedness', style: TextStyle(fontSize: 13, color: FlutterFlowTheme.of(context).secondaryText)),
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: () => setState(() => _opponentHandedness = _opponentHandedness == 'Right' ? null : 'Right'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _opponentHandedness == 'Right' ? FlutterFlowTheme.of(context).primary : FlutterFlowTheme.of(context).secondaryBackground,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.3)),
+                          ),
+                          child: Text('Right', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _opponentHandedness == 'Right' ? Colors.white : FlutterFlowTheme.of(context).primaryText)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => setState(() => _opponentHandedness = _opponentHandedness == 'Left' ? null : 'Left'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _opponentHandedness == 'Left' ? FlutterFlowTheme.of(context).primary : FlutterFlowTheme.of(context).secondaryBackground,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.3)),
+                          ),
+                          child: Text('Left', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _opponentHandedness == 'Left' ? Colors.white : FlutterFlowTheme.of(context).primaryText)),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
 
                   // ── Match Setup Section ──

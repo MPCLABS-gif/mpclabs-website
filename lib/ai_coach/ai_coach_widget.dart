@@ -115,7 +115,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     return {'slowStart': slowStart, 'tiredStat': tiredStat, 'ledLost': ledLost};
   }
 
-  List<Map<String, dynamic>> _generateInsights(List<MatchesRecord> matches) {
+  List<Map<String, dynamic>> _generateInsights(List<MatchesRecord> matches, {List<TournamentsRecord> tournaments = const []}) {
     final completed = matches.where((m) => _matchWinner(m) != null).toList();
     if (completed.isEmpty) return [];
     final insights = <Map<String, dynamic>>[];
@@ -465,7 +465,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         } else if (rivalRate >= 0.4) {
           rivalBody = "${rival.key} is your most frequent opponent. You have played ${rival.value} matches and won $rivalPct%. It is a close rivalry. Small adjustments could give you the edge.";
         } else {
-          rivalBody = "${rival.key.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")} currently has the upper hand. Your record in this matchup is $rivalPct%. Reviewing your matches against them may reveal patterns you can exploit next time.";
+          rivalBody = "${rival.key} currently has the upper hand. Your record in this matchup is $rivalPct%. Reviewing your matches against them may reveal patterns you can exploit next time.";
         }
         insights.add({"icon": "🆚", "title": "Toughest Opponent", "body": rivalBody, "tier": "pro"});
       }
@@ -730,6 +730,122 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       insights.add({"icon": "🎯", "title": "Game-by-Game Breakdown", "body": "$primaryLine $contextLine".trim(), "tier": "premium"});
     }
 
+
+    // ── Tournament Result Insights (pro) ──
+    final resultRanking = {
+      'Gold': 1, 'Silver': 2, 'Bronze': 3, '4th Place': 4,
+      'Semi Final': 5, 'Quarter Final': 6, 'Round of 16': 7,
+      'Round of 32': 8, 'Group Stage': 9, 'Did Not Place': 10, 'Withdrew': 11
+    };
+
+    final tournamentsWithResults = tournaments.where((t) => t.result.isNotEmpty && t.result != 'Withdrew').toList();
+    tournamentsWithResults.sort((a, b) => (a.date ?? DateTime(0)).compareTo(b.date ?? DateTime(0)));
+
+    if (tournamentsWithResults.isNotEmpty) {
+      // Best Result
+      final bestT = tournamentsWithResults.reduce((a, b) =>
+        (resultRanking[a.result] ?? 99) <= (resultRanking[b.result] ?? 99) ? a : b);
+      final bestResult = bestT.result;
+      final bestCount = tournamentsWithResults.where((t) => t.result == bestResult).length;
+      final bestCountStr = bestCount > 1 ? 'which you have reached $bestCount times' : 'your best performance so far';
+
+      String bestBody;
+      if (bestResult == 'Gold') {
+        bestBody = "You have won Gold in a tournament. That is a significant achievement. The challenge now is to maintain that level and defend your title at the next opportunity.";
+      } else if (bestResult == 'Silver') {
+        bestBody = "Your best result is a Silver medal, $bestCountStr. You have reached a Final and performed at the highest level. One more step to Gold.";
+      } else if (bestResult == 'Bronze') {
+        bestBody = "Your best result is a Bronze medal, $bestCountStr. You are competing at the top end of tournaments. Keep pushing for that Final spot.";
+      } else {
+        bestBody = "Your best tournament result is a $bestResult, $bestCountStr. You are getting closer to a breakthrough and one more strong run could take you further.";
+      }
+      insights.add({"icon": "🏆", "title": "Best Result", "body": bestBody, "tier": "pro"});
+
+      // Champion's Challenge
+      final goldResults = tournamentsWithResults.where((t) => t.result == 'Gold').toList();
+      if (goldResults.isNotEmpty) {
+        final goldName = goldResults.last.name;
+        insights.add({"icon": "🥇", "title": "Champion's Challenge", "body": "You won Gold at $goldName. That is a significant achievement. The challenge now is to maintain that level and defend your title at the next opportunity.", "tier": "pro"});
+      }
+
+      // Finals Record
+      final finals = tournamentsWithResults.where((t) => t.result == 'Gold' || t.result == 'Silver').toList();
+      if (finals.length >= 2) {
+        final wins = finals.where((t) => t.result == 'Gold').length;
+        insights.add({"icon": "🏅", "title": "Finals Record", "body": "You have reached ${finals.length} Finals and won $wins of them. You perform well when competing for titles.", "tier": "pro"});
+      }
+
+      // Medal Hunter
+      final medals = tournamentsWithResults.where((t) => ['Gold', 'Silver', 'Bronze'].contains(t.result)).toList();
+      final last6 = tournamentsWithResults.length >= 6 ? tournamentsWithResults.sublist(tournamentsWithResults.length - 6) : tournamentsWithResults;
+      final medalsInLast6 = last6.where((t) => ['Gold', 'Silver', 'Bronze'].contains(t.result)).length;
+      if (medals.length >= 3 || medalsInLast6 >= 2) {
+        insights.add({"icon": "🎯", "title": "Medal Hunter", "body": "You have earned medals in ${medals.length} of your last ${tournamentsWithResults.length} tournaments. You are regularly putting yourself in contention for the top positions.", "tier": "pro"});
+      }
+
+      if (tournamentsWithResults.length >= 3) {
+        // Tournament Progression
+        final last3 = tournamentsWithResults.sublist(tournamentsWithResults.length - 3);
+        final r1 = last3[0].result; final r2 = last3[1].result; final r3 = last3[2].result;
+        final rank1 = resultRanking[r1] ?? 99;
+        final rank2 = resultRanking[r2] ?? 99;
+        final rank3 = resultRanking[r3] ?? 99;
+        if (rank3 < rank2 && rank2 < rank1) {
+          insights.add({"icon": "📈", "title": "Tournament Progression", "body": "Your tournament performances are trending in the right direction. Across your last three tournaments, you progressed from the $r1 to the $r2 and then the $r3.", "tier": "pro"});
+        }
+
+        // Tournament Consistency
+        final resultCounts = <String, int>{};
+        for (final t in tournamentsWithResults) { resultCounts[t.result] = (resultCounts[t.result] ?? 0) + 1; }
+        final mostCommon = resultCounts.entries.reduce((a, b) => a.value >= b.value ? a : b);
+        final summaryParts = resultCounts.entries.toList()
+          ..sort((a, b) => (resultRanking[a.key] ?? 99).compareTo(resultRanking[b.key] ?? 99));
+        final summaryStr = summaryParts.map((e) => 'the ${e.key} ${e.value} time${e.value > 1 ? "s" : ""}').join(', ');
+        insights.add({"icon": "📊", "title": "Tournament Consistency", "body": "Across ${tournamentsWithResults.length} tournaments, you have reached $summaryStr. The ${mostCommon.key} is currently your most common finishing stage.", "tier": "pro"});
+
+        // Next Level Gap
+        final mostCommonRank = resultRanking[mostCommon.key] ?? 99;
+        final nextLevel = resultRanking.entries.where((e) => e.value == mostCommonRank - 1).map((e) => e.key).firstOrNull;
+        if (nextLevel != null && mostCommonRank > 1) {
+          insights.add({"icon": "🎯", "title": "Next Level Gap", "body": "You are regularly reaching the ${mostCommon.key}. Winning just one more match in each tournament would move you into the $nextLevel. Focus on the moments that decide tight matches.", "tier": "pro"});
+        }
+
+        // Tournament Form
+        final last3Results = tournamentsWithResults.sublist(tournamentsWithResults.length - 3);
+        final allStrongForm = last3Results.every((t) => (resultRanking[t.result] ?? 99) <= 5);
+        if (allStrongForm) {
+          insights.add({"icon": "🔥", "title": "Tournament Form", "body": "You have reached the Semi Final or better in your last 3 consecutive tournaments. Your tournament form is currently strong.", "tier": "pro"});
+        }
+
+        // Bounce Back
+        for (int i = 1; i < tournamentsWithResults.length; i++) {
+          final prev = resultRanking[tournamentsWithResults[i-1].result] ?? 99;
+          final curr = resultRanking[tournamentsWithResults[i].result] ?? 99;
+          if (prev > 7 && curr <= 6) {
+            insights.add({"icon": "💪", "title": "Bounce Back Ability", "body": "After an early exit, you responded by reaching the ${tournamentsWithResults[i].result} or better in your next tournament. Strong players learn, adapt, and come back stronger.", "tier": "pro"});
+            break;
+          }
+        }
+      }
+
+      // Breaking Through
+      if (tournamentsWithResults.length >= 4) {
+        final last4 = tournamentsWithResults.sublist(tournamentsWithResults.length - 4);
+        final stuckAtQF = last4.every((t) => t.result == 'Quarter Final');
+        if (stuckAtQF) {
+          insights.add({"icon": "🚀", "title": "Breaking Through", "body": "You have exited at the Quarter Final stage in your last 4 tournaments. The Semi Final is the next barrier to overcome. Focus on what changes in those deciding matches.", "tier": "pro"});
+        }
+      }
+
+      // Consistent Contender
+      if (tournamentsWithResults.length >= 7) {
+        final last7 = tournamentsWithResults.sublist(tournamentsWithResults.length - 7);
+        final qfOrBetter = last7.where((t) => (resultRanking[t.result] ?? 99) <= 6).length;
+        if (qfOrBetter >= 6) {
+          insights.add({"icon": "⭐", "title": "Consistent Contender", "body": "You have reached at least the Quarter Final in $qfOrBetter of your last 7 tournaments. You are becoming a consistently competitive tournament player.", "tier": "pro"});
+        }
+      }
+    }
     // ── Top Improvement Area (free, inserted at front) ──
     if (completed.length >= 5) {
       String topTitle = "Top Improvement Area";
@@ -1026,13 +1142,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         top: true,
         child: _loadingStatus
             ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(primary)))
-            : StreamBuilder<List<MatchesRecord>>(
+            : StreamBuilder<List<TournamentsRecord>>(
+                stream: queryTournamentsRecord(queryBuilder: (q) => q.where("ownerUid", isEqualTo: currentUserUid).orderBy("date", descending: true)),
+                builder: (context, tournamentSnapshot) {
+                  return StreamBuilder<List<MatchesRecord>>(
                 stream: queryMatchesRecord(queryBuilder: (q) => q.where("ownerUid", isEqualTo: currentUserUid).orderBy("matchDate", descending: true)),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) return Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(primary)));
                   final matches = snapshot.data!;
                   final completed = matches.where((m) => _matchWinner(m) != null).toList();
-                  final insights = _generateInsights(matches);
+                  final insights = _generateInsights(matches, tournaments: tournamentSnapshot.data ?? []);
                   final blurredInsights = _computeBlurredInsights(completed);
                   if (completed.isEmpty) {
                     return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -1146,6 +1265,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
                       const SizedBox(height: 32),
                     ],
                   );
+                },
+              );
                 },
               ),
       ),
