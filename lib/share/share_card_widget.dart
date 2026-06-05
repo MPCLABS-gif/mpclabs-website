@@ -217,7 +217,7 @@ class ShareCardWidget extends StatelessWidget {
 
           // ── vs Opponent ──
           Text(
-            'vs ${match.opponentName}',
+            'vs ${match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")}',
             style: GoogleFonts.inter(
                 color: Colors.white.withOpacity(0.5),
                 fontSize: 13,

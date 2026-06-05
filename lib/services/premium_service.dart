@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '/auth/firebase_auth/auth_util.dart';
 
@@ -53,8 +54,9 @@ class PremiumService {
       referralCode = generateReferralCode(currentUserUid);
     }
 
-    // Unlock trial after 5 days
-    if (daysActive >= 5 && !trialUnlocked) {
+    // Unlock trial after 3 days on iOS, 5 days on Android
+    final trialDays = Platform.isIOS ? 3 : 5;
+    if (daysActive >= trialDays && !trialUnlocked) {
       trialUnlocked = true;
       await ref.update({
         'daysActive': daysActive,

@@ -34,6 +34,9 @@ class TournamentsRecord extends FirestoreRecord {
   String? _level;
   String get level => _level ?? "";
   bool hasLevel() => _level != null;
+  String? _result;
+  String get result => _result ?? "";
+  bool hasResult() => _result != null;
 
   void _initializeFields() {
     _ownerUid = snapshotData["ownerUid"] as String?;
@@ -42,6 +45,7 @@ class TournamentsRecord extends FirestoreRecord {
     _location = snapshotData["location"] as String?;
     _notes = snapshotData["notes"] as String?;
     _level = snapshotData["level"] as String?;
+    _result = snapshotData["result"] as String?;
   }
 
   static CollectionReference get collection =>
@@ -85,6 +89,7 @@ Map<String, dynamic> createTournamentsRecordData({
   String? location,
   String? notes,
   String? level,
+  String? result,
 }) {
   final firestoreData = mapToFirestore(
     <String, dynamic>{
@@ -94,6 +99,7 @@ Map<String, dynamic> createTournamentsRecordData({
       "location": location,
       "notes": notes,
       "level": level,
+      "result": result,
     }.withoutNulls,
   );
   return firestoreData;

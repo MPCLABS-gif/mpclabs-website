@@ -31,6 +31,9 @@ class MatchesRecord extends FirestoreRecord {
   String? _opponentName;
   String get opponentName => _opponentName ?? '';
   bool hasOpponentName() => _opponentName != null;
+  String? _opponentHandedness;
+  String get opponentHandedness => _opponentHandedness ?? '';
+  bool hasOpponentHandedness() => _opponentHandedness != null;
 
   // "matchDate" field.
   DateTime? _matchDate;
@@ -158,6 +161,7 @@ Map<String, dynamic> createMatchesRecordData({
   String? ownerUid,
   String? playerName,
   String? opponentName,
+  String? opponentHandedness,
   DateTime? matchDate,
   String? notes,
   String? matchType,

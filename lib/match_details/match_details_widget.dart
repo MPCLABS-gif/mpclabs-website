@@ -125,7 +125,7 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
       final opponentTotal = gamesWon['opponent']! + (isPlayer ? 0 : 1);
 
       if (playerTotal >= 2 || opponentTotal >= 2) {
-        final winner = playerTotal >= 2 ? match.playerName : match.opponentName;
+        final winner = playerTotal >= 2 ? match.playerName : match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ");
         await widget.matchRef!.update(mapToFirestore({
           'matchWinner': winner,
           'matchCompleted': true,
@@ -351,8 +351,8 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
 
         String matchStatusText = 'Game $currentGame';
         if (matchOver) {
-          final winner = playerWon ? match.playerName : match.opponentName;
-          matchStatusText = playerWon ? '${match.playerName} wins the match! 🏆' : 'Tough match — ${match.opponentName} won this one';
+          final winner = playerWon ? match.playerName : match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ");
+          matchStatusText = playerWon ? '${match.playerName} wins the match! 🏆' : 'Tough match — ${match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")} won this one';
         }
 
         return GestureDetector(
@@ -406,10 +406,13 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                                 MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
-                                  child: Text(match.playerName,
+                                  child: Text(
+                                      match.partnerName.isNotEmpty
+                                          ? '\${match.playerName} & \${match.partnerName}'
+                                          : match.playerName,
                                       style: GoogleFonts.inter(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 18),
+                                          fontSize: 16),
                                       overflow: TextOverflow.ellipsis)),
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -430,10 +433,13 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                                             : Colors.blue.shade800)),
                               ),
                               Expanded(
-                                  child: Text(match.opponentName,
+                                  child: Text(
+                                      match.opponentPartnerName.isNotEmpty
+                                          ? '${match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")} & ${match.opponentPartnerName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")}'
+                                          : match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" "),
                                       style: GoogleFonts.inter(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 18),
+                                          fontSize: 16),
                                       textAlign: TextAlign.right,
                                       overflow: TextOverflow.ellipsis)),
                             ],
@@ -476,8 +482,9 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                         match.g1Opponent, currentGame == 1, match),
                     _buildGameRow(context, 'Game 2', match.g2Player,
                         match.g2Opponent, currentGame == 2, match),
-                    _buildGameRow(context, 'Game 3', match.g3Player,
-                        match.g3Opponent, currentGame == 3, match),
+                    if (match.g3Player > 0 || match.g3Opponent > 0)
+                      _buildGameRow(context, 'Game 3', match.g3Player,
+                          match.g3Opponent, currentGame == 3, match),
                     const SizedBox(height: 16),
                     Container(
                       margin:
@@ -521,8 +528,8 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                               disabled: buttonsDisabled,
                             ),
                             _buildScoreButton(
-                              label: match.opponentName.isNotEmpty
-                                  ? match.opponentName.split(' ')[0]
+                              label: match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ").isNotEmpty
+                                  ? match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ").split(' ')[0]
                                   : 'Opponent',
                               onTap: () =>
                                   _incrementScore(match, false),
@@ -701,7 +708,7 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                                 icon: Icon(Icons.home,
                                     color: playerWon ? Colors.green.shade700 : Colors.grey.shade600,
                                     size: 18),
-                                label: Text('Done — Go to Home',
+                                label: Text('Done. Go to Home',
                                     style: GoogleFonts.inter(
                                         color: playerWon ? Colors.green.shade700 : Colors.grey.shade600,
                                         fontWeight: FontWeight.w600,

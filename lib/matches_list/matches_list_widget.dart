@@ -67,7 +67,7 @@ class _MatchesListWidgetState extends State<MatchesListWidget> {
           children: [
             Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
-            Text('${match.playerName} vs ${match.opponentName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('${match.playerName} vs ${match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
@@ -246,7 +246,7 @@ class _MatchesListWidgetState extends State<MatchesListWidget> {
                                       const SizedBox(height: 6),
                                       Padding(
                                         padding: const EdgeInsets.only(left: 46),
-                                        child: Text('vs ${match.opponentName}', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                                        child: Text('vs ${match.opponentName.split(" ").map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(" ")}', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
                                       ),
                                       const SizedBox(height: 4),
                                       Padding(

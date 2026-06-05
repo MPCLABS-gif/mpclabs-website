@@ -99,7 +99,7 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(DateFormat("dd MMM yyyy").format(selectedDate),
-                          style: const TextStyle(fontSize: 15, color: Colors.black87, fontWeight: FontWeight.w500)),
+                          style: TextStyle(fontSize: 15, color: FlutterFlowTheme.of(context).primaryText, fontWeight: FontWeight.w500)),
                       Icon(Icons.calendar_today, size: 20, color: Colors.blueGrey.shade600),
                     ],
                   ),
@@ -187,6 +187,7 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
     final locationController = TextEditingController(text: t.location);
     final levelController = TextEditingController(text: t.level);
     final notesController = TextEditingController(text: t.notes);
+    String? selectedResult = t.result.isNotEmpty ? t.result : null;
     DateTime selectedDate = t.date ?? DateTime.now().add(const Duration(days: 7));
 
     showModalBottomSheet(
@@ -228,6 +229,14 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
               TextField(controller: levelController, decoration: InputDecoration(labelText: "Level", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))),
               const SizedBox(height: 12),
               TextField(controller: notesController, maxLines: 2, decoration: InputDecoration(labelText: "Notes", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: selectedResult,
+                decoration: InputDecoration(labelText: "Result", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                hint: const Text("Select result"),
+                items: ["Gold", "Silver", "Bronze", "4th Place", "Semi Final", "Quarter Final", "Round of 16", "Round of 32", "Group Stage", "Did Not Place", "Withdrew"].map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                onChanged: (val) => setModalState(() => selectedResult = val),
+              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
@@ -238,6 +247,7 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
                       "location": locationController.text,
                       "level": levelController.text,
                       "notes": notesController.text,
+                      "result": selectedResult ?? "",
                     });
                     if (context.mounted) Navigator.pop(context);
                   } catch (e) {
@@ -315,6 +325,23 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
     if (daysUntil <= 7) return "Starts in $daysUntil days";
     if (daysUntil <= 30) return "Starts in $daysUntil days";
     return "Starts in $daysUntil days";
+  }
+
+  Color _resultColor(String result) {
+    switch (result) {
+      case 'Gold': return const Color(0xFFFFD700);
+      case 'Silver': return const Color(0xFFC0C0C0);
+      case 'Bronze': return const Color(0xFFCD7F32);
+      case '4th Place': return Colors.orange;
+      case 'Semi Final': return Colors.purple;
+      case 'Quarter Final': return Colors.blue;
+      case 'Round of 16': return Colors.teal;
+      case 'Round of 32': return Colors.cyan;
+      case 'Group Stage': return Colors.indigo;
+      case 'Did Not Place': return Colors.grey;
+      case 'Withdrew': return Colors.red;
+      default: return Colors.grey;
+    }
   }
 
   @override
@@ -448,9 +475,9 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isPast ? Colors.grey.shade50 : FlutterFlowTheme.of(context).secondaryBackground,
+          color: FlutterFlowTheme.of(context).secondaryBackground,
           borderRadius: BorderRadius.circular(12),
-          border: isPast ? Border.all(color: Colors.grey.shade200) : Border.all(color: urgencyColor.withOpacity(0.3)),
+          border: Border.all(color: urgencyColor.withOpacity(0.3)),
           boxShadow: isPast ? [] : [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Row(
@@ -480,14 +507,14 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(t.name, style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16)),
+                  Text(t.name, style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16, color: FlutterFlowTheme.of(context).primaryText)),
                   if (t.location.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Icon(Icons.location_on, size: 12, color: Colors.grey.shade500),
+                        Icon(Icons.location_on, size: 12, color: FlutterFlowTheme.of(context).secondaryText),
                         const SizedBox(width: 2),
-                        Text(t.location, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                        Text(t.location, style: TextStyle(fontSize: 12, color: FlutterFlowTheme.of(context).secondaryText)),
                       ],
                     ),
                   ],
@@ -496,21 +523,31 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.purple.shade50,
+                        color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Text(t.level, style: TextStyle(fontSize: 11, color: Colors.purple.shade700, fontWeight: FontWeight.w700)),
+                      child: Text(t.level, style: TextStyle(fontSize: 11, color: FlutterFlowTheme.of(context).primary, fontWeight: FontWeight.w700)),
                     ),
                   ],
                   const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.lightbulb_outline, size: 12, color: Colors.orange.shade400),
-                      const SizedBox(width: 4),
-                      Text("Prepare your strategy",
-                          style: TextStyle(fontSize: 11, color: Colors.orange.shade600, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
+                  if (isPast && t.result.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Icon(Icons.emoji_events, size: 12, color: _resultColor(t.result)),
+                        const SizedBox(width: 4),
+                        Text(t.result, style: TextStyle(fontSize: 11, color: _resultColor(t.result), fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ] else ...[
+                    Row(
+                      children: [
+                        Icon(Icons.lightbulb_outline, size: 12, color: Colors.orange.shade400),
+                        const SizedBox(width: 4),
+                        Text(isPast ? "Add your result" : "Prepare your strategy",
+                            style: TextStyle(fontSize: 11, color: Colors.orange.shade600, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ],
                   if (!isPast) ...[
                     const SizedBox(height: 6),
                     Container(

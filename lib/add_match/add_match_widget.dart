@@ -24,6 +24,7 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   String _mode = 'result';
   String? _selectedMood;
+  String? _opponentHandedness;
   String _scoringFormat = '21';
   final _g1pController = TextEditingController();
   final _g1oController = TextEditingController();
@@ -357,25 +358,35 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: ['Excited', 'Confident', 'Nervous', 'Focused', 'Tired', 'Anxious', 'Sad', 'Upset'].map((mood) {
+                          children: ['Excited', 'Confident', 'Energised', 'Focused', 'Calm', 'Nervous', 'Anxious', 'Unsure', 'Tired', 'Frustrated', 'Not feeling well'].map((mood) {
                             final isSelected = _selectedMood == mood;
                             final colors = {
                               'Excited': Colors.orange,
                               'Confident': Colors.green,
-                              'Nervous': Colors.yellow.shade700,
+                              'Energised': Colors.lightBlue,
                               'Focused': Colors.blue,
-                              'Tired': Colors.grey,
+                              'Calm': Colors.teal,
+                              'Nervous': Colors.yellow.shade700,
                               'Anxious': Colors.red.shade300,
+                              'Unsure': Colors.blueGrey,
+                              'Tired': Colors.grey,
+                              'Frustrated': Colors.red,
+                              'Not feeling well': Colors.purple,
                               'Sad': Colors.indigo,
                               'Upset': Colors.red,
                             };
                             final emojis = {
                               'Excited': '🔥',
                               'Confident': '💪',
-                              'Nervous': '😬',
+                              'Energised': '⚡',
                               'Focused': '🎯',
-                              'Tired': '😴',
+                              'Calm': '😌',
+                              'Nervous': '😬',
                               'Anxious': '😰',
+                              'Unsure': '🤔',
+                              'Tired': '😴',
+                              'Frustrated': '😤',
+                              'Not feeling well': '🤢',
                               'Sad': '😔',
                               'Upset': '😤',
                             };
@@ -422,11 +433,56 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                       final g2o = int.tryParse(_g2oController.text) ?? 0;
                       final g3p = int.tryParse(_g3pController.text) ?? 0;
                       final g3o = int.tryParse(_g3oController.text) ?? 0;
+
+                      // Validate at least Game 1 is entered
+                      final g1Entered = _g1pController.text.isNotEmpty && _g1oController.text.isNotEmpty;
+                      if (_mode == 'result' && !g1Entered) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Please enter at least Game 1 scores', style: TextStyle(color: FlutterFlowTheme.of(context).primaryText)),
+                          duration: const Duration(milliseconds: 2500),
+                          backgroundColor: Colors.red.shade400,
+                        ));
+                        return;
+                      }
+
+                      // Determine games played
+                      final g2Entered = _g2pController.text.isNotEmpty && _g2oController.text.isNotEmpty;
+                      final g3Entered = _g3pController.text.isNotEmpty && _g3oController.text.isNotEmpty;
+
+                      // Calculate games won
+                      int playerGames = 0;
+                      int opponentGames = 0;
+                      if (g1Entered) { if (g1p > g1o) playerGames++; else opponentGames++; }
+                      if (g2Entered) { if (g2p > g2o) playerGames++; else opponentGames++; }
+                      if (g3Entered) { if (g3p > g3o) playerGames++; else opponentGames++; }
+
+                      // Handle 1-1 tie-breaker
+                      if (_mode == 'result' && g2Entered && !g3Entered && playerGames == 1 && opponentGames == 1) {
+                        final playerName = _model.playerNameTextController.text.isNotEmpty ? _model.playerNameTextController.text : 'You';
+                        final opponentName = _model.opponentNameTextController.text.isNotEmpty ? _model.opponentNameTextController.text : 'Opponent';
+                        final winner = await showDialog<String>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Who won the match?', style: TextStyle(fontWeight: FontWeight.bold)),
+                            content: const Text('The match is level at 1-1. Please select the winner.'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx, 'player'), child: Text(playerName, style: const TextStyle(fontWeight: FontWeight.bold))),
+                              TextButton(onPressed: () => Navigator.pop(ctx, 'opponent'), child: Text(opponentName, style: const TextStyle(fontWeight: FontWeight.bold))),
+                            ],
+                          ),
+                        );
+                        if (winner == null) return;
+                        if (winner == 'player') playerGames++; else opponentGames++;
+                      }
+
+                      // Set currentGame based on games played
+                      final gamesPlayed = g3Entered ? 3 : g2Entered ? 2 : 1;
                       final docRef = MatchesRecord.collection.doc();
                       await docRef.set(createMatchesRecordData(
                         ownerUid: currentUserUid,
                         playerName: _model.playerNameTextController.text,
                         opponentName: _model.opponentNameTextController.text,
+                        opponentHandedness: _opponentHandedness,
                         matchDate: getCurrentTimestamp,
                         notes: _model.notesTextFieldTextController.text,
                         matchType: _model.matchTypeValue,
@@ -436,7 +492,7 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                         g2Opponent: _mode == 'result' ? g2o : 0,
                         g3Player: _mode == 'result' ? g3p : 0,
                         g3Opponent: _mode == 'result' ? g3o : 0,
-                        currentGame: _mode == 'live' ? 1 : 3,
+                        currentGame: _mode == 'live' ? 1 : gamesPlayed,
                         mood: _selectedMood,
                         partnerName: _model.partnerNameTextController.text,
                         scoringFormat: _scoringFormat,
