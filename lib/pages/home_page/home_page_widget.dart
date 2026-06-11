@@ -315,7 +315,43 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                     children: [
 
                       // ── Insight Card ──
-                      if (totalMatches >= 3) ...[
+                      if (!loggedIn) ...[
+                        GestureDetector(
+                          onTap: () => context.pushNamed(AiCoachWidget.routeName),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: primary.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: primary.withOpacity(0.2)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 44, height: 44,
+                                  decoration: BoxDecoration(color: primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                                  child: Icon(Icons.psychology_rounded, color: primary, size: 26),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text("Unlock Your AI Coach", style: GoogleFonts.inter(color: primary, fontWeight: FontWeight.bold, fontSize: 14)),
+                                      const SizedBox(height: 3),
+                                      Text("Sign up for free to unlock your personal AI Coach.", style: TextStyle(color: primary.withOpacity(0.8), fontSize: 13, height: 1.4)),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(Icons.chevron_right_rounded, color: primary.withOpacity(0.5), size: 20),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ] else if (totalMatches >= 3) ...[
                         GestureDetector(
                           onTap: () => context.pushNamed(AiCoachWidget.routeName),
                           child: Container(
@@ -406,7 +442,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                         context,
                         icon: Icons.psychology_rounded,
                         label: 'AI Coach',
-                        subtitle: 'Your coaching report is ready',
+                        subtitle: loggedIn ? 'Your coaching report is ready' : 'Sign up to unlock AI Coach',
                         color: const Color(0xFF1A1A2E),
                         textColor: Colors.white,
                         iconColor: Colors.white,

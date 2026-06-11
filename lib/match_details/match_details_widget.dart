@@ -412,25 +412,43 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                                           : match.playerName,
                                       style: GoogleFonts.inter(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 16),
+                                          fontSize: match.partnerName.isNotEmpty ? 13 : 16),
                                       overflow: TextOverflow.ellipsis)),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: match.matchType == 'Tournament'
-                                      ? Colors.orange.shade100
-                                      : Colors.blue.shade100,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(match.matchType,
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: match.matchType ==
-                                                'Tournament'
-                                            ? Colors.orange.shade800
-                                            : Colors.blue.shade800)),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (match.partnerName.isNotEmpty) ...[
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.purple.shade100,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text('Doubles',
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.purple.shade800)),
+                                    ),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: match.matchType == 'Tournament'
+                                          ? Colors.orange.shade100
+                                          : Colors.blue.shade100,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(match.matchType,
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: match.matchType == 'Tournament'
+                                                ? Colors.orange.shade800
+                                                : Colors.blue.shade800)),
+                                  ),
+                                ],
                               ),
                               Expanded(
                                   child: Text(
@@ -439,7 +457,7 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                                           : match.opponentName,
                                       style: GoogleFonts.inter(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 16),
+                                          fontSize: match.opponentPartnerName.isNotEmpty ? 13 : 16),
                                       textAlign: TextAlign.right,
                                       overflow: TextOverflow.ellipsis)),
                             ],
@@ -589,7 +607,7 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
 
                             // ── Score ──
                             Text(
-                              '${gamesWon['player']} – ${gamesWon['opponent']}',
+                              '${gamesWon['player']}-${gamesWon['opponent']}',
                               style: const TextStyle(fontSize: 38, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 4),

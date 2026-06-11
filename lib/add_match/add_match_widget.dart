@@ -73,6 +73,12 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
   }
 
   Widget _scoreRow(String label, TextEditingController p, TextEditingController o) {
+    final pVal = int.tryParse(p.text);
+    final oVal = int.tryParse(o.text);
+    final pWins = pVal != null && oVal != null && pVal > oVal;
+    final oWins = pVal != null && oVal != null && oVal > pVal;
+    final highlightColor = Colors.green.withOpacity(0.15);
+    final defaultColor = FlutterFlowTheme.of(context).secondaryBackground;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -84,11 +90,13 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
               controller: p,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'You',
                 filled: true,
-                fillColor: FlutterFlowTheme.of(context).secondaryBackground,
+                fillColor: pWins ? highlightColor : defaultColor,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: pWins ? BorderSide(color: Colors.green.shade400, width: 1.5) : BorderSide.none),
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
@@ -99,11 +107,13 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
               controller: o,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
+              onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 hintText: 'Opp',
                 filled: true,
-                fillColor: FlutterFlowTheme.of(context).secondaryBackground,
+                fillColor: oWins ? highlightColor : defaultColor,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: oWins ? BorderSide(color: Colors.green.shade400, width: 1.5) : BorderSide.none),
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
@@ -327,32 +337,35 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Partner names (show always, Doubles makes them relevant)
-                  TextFormField(
-                    controller: _model.partnerNameTextController,
-                    focusNode: _model.partnerNameFocusNode,
-                    decoration: InputDecoration(
-                      labelText: 'Partner Name',
-                      hintText: 'Doubles only',
-                      prefixIcon: Icon(Icons.people_outline, color: Colors.grey.shade400),
-                      filled: true,
-                      fillColor: FlutterFlowTheme.of(context).secondaryBackground,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide.none),
+                  // Partner names (only show when Doubles selected)
+                  if (_model.matchFormatValue == 'Doubles') ...[
+                    TextFormField(
+                      controller: _model.partnerNameTextController,
+                      focusNode: _model.partnerNameFocusNode,
+                      decoration: InputDecoration(
+                        labelText: 'Partner Name',
+                        hintText: 'Enter your partners name',
+                        prefixIcon: Icon(Icons.people_outline, color: Colors.grey.shade400),
+                        filled: true,
+                        fillColor: FlutterFlowTheme.of(context).secondaryBackground,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide.none),
+                      ),
+                      style: FlutterFlowTheme.of(context).bodyMedium,
                     ),
-                    style: FlutterFlowTheme.of(context).bodyMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Opponent Partner Name',
-                      hintText: 'Doubles only',
-                      prefixIcon: Icon(Icons.people_outline, color: Colors.grey.shade400),
-                      filled: true,
-                      fillColor: FlutterFlowTheme.of(context).secondaryBackground,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide.none),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      decoration: InputDecoration(
+                        labelText: 'Opponent Partner Name',
+                        hintText: 'Enter opponents partner name',
+                        prefixIcon: Icon(Icons.people_outline, color: Colors.grey.shade400),
+                        filled: true,
+                        fillColor: FlutterFlowTheme.of(context).secondaryBackground,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0), borderSide: BorderSide.none),
+                      ),
+                      style: FlutterFlowTheme.of(context).bodyMedium,
                     ),
-                    style: FlutterFlowTheme.of(context).bodyMedium,
-                  ),
+                    const SizedBox(height: 12),
+                  ],
                   const SizedBox(height: 20),
                   if (_mode == 'result') ...[
                     Container(
@@ -385,12 +398,12 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('How are you feeling going into this match?', style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
+                        Text('How do you feel before this match?', style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: ['Excited', 'Confident', 'Energised', 'Focused', 'Calm', 'Nervous', 'Anxious', 'Unsure', 'Tired', 'Frustrated', 'Not feeling well'].map((mood) {
+                          children: ['Excited', 'Confident', 'Energised', 'Focused', 'Calm', 'Nervous', 'Anxious', 'Unsure', 'Tired', 'Frustrated', 'Unwell'].map((mood) {
                             final isSelected = _selectedMood == mood;
                             final colors = {
                               'Excited': Colors.orange,
@@ -403,7 +416,7 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                               'Unsure': Colors.blueGrey,
                               'Tired': Colors.grey,
                               'Frustrated': Colors.red,
-                              'Not feeling well': Colors.purple,
+                              'Unwell': Colors.purple,
                               'Sad': Colors.indigo,
                               'Upset': Colors.red,
                             };
@@ -418,7 +431,7 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                               'Unsure': '🤔',
                               'Tired': '😴',
                               'Frustrated': '😤',
-                              'Not feeling well': '🤢',
+                              'Unwell': '🤢',
                               'Sad': '😔',
                               'Upset': '😤',
                             };
@@ -480,6 +493,33 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                       // Determine games played
                       final g2Entered = _g2pController.text.isNotEmpty && _g2oController.text.isNotEmpty;
                       final g3Entered = _g3pController.text.isNotEmpty && _g3oController.text.isNotEmpty;
+                      // Validate no tied scores
+                      if (_mode == 'result') {
+                        if (g1Entered && g1p == g1o) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Game 1 cannot end in a tie. Please check the score.', style: TextStyle(color: FlutterFlowTheme.of(context).primaryText)),
+                            duration: const Duration(milliseconds: 2500),
+                            backgroundColor: Colors.red.shade400,
+                          ));
+                          return;
+                        }
+                        if (g2Entered && g2p == g2o) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Game 2 cannot end in a tie. Please check the score.', style: TextStyle(color: FlutterFlowTheme.of(context).primaryText)),
+                            duration: const Duration(milliseconds: 2500),
+                            backgroundColor: Colors.red.shade400,
+                          ));
+                          return;
+                        }
+                        if (g3Entered && g3p == g3o) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Game 3 cannot end in a tie. Please check the score.', style: TextStyle(color: FlutterFlowTheme.of(context).primaryText)),
+                            duration: const Duration(milliseconds: 2500),
+                            backgroundColor: Colors.red.shade400,
+                          ));
+                          return;
+                        }
+                      }
 
                       // Calculate games won
                       int playerGames = 0;

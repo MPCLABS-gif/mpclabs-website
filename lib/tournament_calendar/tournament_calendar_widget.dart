@@ -232,7 +232,7 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: selectedResult,
-                decoration: InputDecoration(labelText: "Result", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                decoration: InputDecoration(labelText: "Tournament Result", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
                 hint: const Text("Select result"),
                 items: ["Gold", "Silver", "Bronze", "4th Place", "Semi Final", "Quarter Final", "Round of 16", "Round of 32", "Group Stage", "Did Not Place", "Withdrew"].map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                 onChanged: (val) => setModalState(() => selectedResult = val),
@@ -477,7 +477,7 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
         decoration: BoxDecoration(
           color: FlutterFlowTheme.of(context).secondaryBackground,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: urgencyColor.withOpacity(0.3)),
+          border: Border.all(color: isPast && t.result.isNotEmpty ? _resultColor(t.result).withOpacity(0.6) : urgencyColor.withOpacity(0.3), width: isPast && t.result.isNotEmpty ? 1.5 : 1),
           boxShadow: isPast ? [] : [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Row(
@@ -527,6 +527,23 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(t.level, style: TextStyle(fontSize: 11, color: FlutterFlowTheme.of(context).primary, fontWeight: FontWeight.w700)),
+                    ),
+                  ],
+                if (t.notes.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.notes, size: 12, color: Colors.grey.shade400),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            t.notes,
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                   const SizedBox(height: 6),

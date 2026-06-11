@@ -128,11 +128,11 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       final remainingLabel = remaining == 1 ? "1 more match" : "$remaining more matches";
       insights.add({"icon": "🏸", "title": "Getting Started", "body": "We are learning your game. Play $remainingLabel to unlock your first coaching report.", "progress": completed.length, "tier": "free"});
     } else if (winRate >= 0.7) {
-      insights.add({"icon": "🔥", "title": "Strong Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. That puts you in the top tier of players tracking their game. The challenge now is not just winning, it is raising your own bar.", "tier": "free"});
+      insights.add({"icon": "🔥", "title": "Strong Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. Your consistency is producing strong results. Keep challenging yourself and looking for ways to keep improving.", "tier": "free"});
     } else if (winRate >= 0.5) {
-      insights.add({"icon": "📈", "title": "Positive Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. You win more than you lose. But the margins are tight. The players who break through at this level learn to close out the games they are already winning.", "tier": "free"});
+      insights.add({"icon": "📈", "title": "Positive Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. You win more than you lose. But the margins are tight. The next step is improving how you close out matches when you are in a winning position.", "tier": "free"});
     } else if (winRate > 0.2) {
-      insights.add({"icon": "💪", "title": "Developing Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. Right now the losses outweigh the wins. But you are here, tracking, analysing, improving. That is what separates players who plateau from players who break through.", "tier": "free"});
+      insights.add({"icon": "💪", "title": "Developing Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. You are still building your results and gaining valuable match experience. Every match adds to your picture.", "tier": "free"});
     } else {
       insights.add({"icon": "🌱", "title": "Building Your Profile", "body": "We have analysed ${completed.length} matches so far. Keep tracking your results to unlock more accurate coaching insights and personalised recommendations.", "tier": "free"});
     }
@@ -205,7 +205,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       } else if (wStreak == 2) {
         insights.add({"icon": "📈", "title": "Early Momentum", "body": "You have won two matches in a row. Momentum is starting to build. Keep it going.", "tier": "free"});
       } else if (lStreak >= 3) {
-        insights.add({"icon": "🔄", "title": "Losing Streak", "body": "$lStreak losses in a row. It might be time to adjust your approach. Small changes can help turn results around.", "tier": "free"});
+        insights.add({"icon": "🔄", "title": "Losing Streak", "body": "$lStreak matches have not gone your way. Small adjustments and continued effort can help turn things around.", "tier": "free"});
       } else if (lStreak >= 1) {
         insights.add({"icon": "🔄", "title": "Bounce Back Time", "body": "Your last match was a loss. One result does not define your form. Focus on your next match.", "tier": "free"});
       } else if (wStreak == 1) {
@@ -227,13 +227,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         final pct = (worstRatePro * 100).round();
         String dangerBody;
         if (worstRatePro < 0.2) {
-          dangerBody = "When you feel $worstMoodPro, your win rate drops to $pct%. This mood is having a strong impact on your results. Working on your pre-match mindset could make a big difference.";
+          dangerBody = "When you feel $worstMoodPro, your win rate drops to $pct%. This mood appears to be making matches more challenging. Being aware of it is the first step to managing it.";
         } else if (worstRatePro < 0.4) {
-          dangerBody = "Your win rate is $pct% when feeling $worstMoodPro. This pattern is worth paying attention to. Finding ways to manage this mindset before matches could help your performance.";
+          dangerBody = "Your win rate is $pct% when feeling $worstMoodPro. This is a pattern worth noting. Finding ways to manage this mindset before matches could help your performance.";
         } else {
-          dangerBody = "You win $pct% when feeling $worstMoodPro, which is lower than your usual level. Being aware of this is the first step to managing it during matches.";
+          dangerBody = "You win $pct% when feeling $worstMoodPro, which is lower than your usual level. Being aware of this pattern is a useful first step.";
         }
-        insights.add({"icon": "⚠️", "title": "Danger Mood Warning", "body": dangerBody, "tier": "pro"});
+        insights.add({"icon": "⚠️", "title": "Performance Mood Alert", "body": dangerBody, "tier": "pro"});
       }
     }
 
@@ -330,7 +330,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           closeBody = "In close games decided by 3 points or fewer, you win $closePct% of them. You are competitive in tight moments. Small improvements in key points could push this higher.";
         } else {
           closeTitle = "Close Games Need Work";
-          closeBody = "In close games decided by 3 points or fewer, you win $closePct% of them. Tight moments are not going your way often enough. Improving focus in key points could help.";
+          closeBody = "In close games decided by 3 points or fewer, you win $closePct% of them. Tight moments are a good opportunity for growth. Improving focus on key points could make a real difference.";
         }
         final addOn = totalGamesPlayed > 0 && (closeGamesTotal / totalGamesPlayed) >= 0.4
             ? " A large portion of your games are decided by small margins. Improving performance in these moments could significantly impact your results."
@@ -358,7 +358,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         consBody = "Your results show some variation between matches. Working on your pre-match routine and preparation could help you perform at your best more often.";
       } else {
         consTitle = "Inconsistent Results";
-        consBody = "Your results vary significantly between matches. Inconsistency is affecting your performance. Focusing on preparation and routine could help stabilise your game.";
+        consBody = "Your results vary significantly between matches. Your results vary significantly between matches. Building a consistent routine and preparation could help unlock better results.";
       }
       // Add-on: compare recent 5 vs earlier 5 consistency
       String consAddOn = "";
@@ -395,7 +395,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         tournBody = "Your tournament win rate is $tPct% compared to $pPct% in practice. Competition brings out a little extra in your game. Keep building on it.";
       } else if (diff <= -0.2) {
         tournTitle = "Tournament Pressure"; tournIcon = "⚡";
-        tournBody = "Your win rate drops from $pPct% in practice to $tPct% in tournaments. The added pressure is affecting your results. Working on your preparation before matches could help.";
+        tournBody = "Your win rate drops from $pPct% in practice to $tPct% in tournaments. Tournament matches seem more challenging right now. Building your preparation and pre-match routine could help close the gap.";
       } else if (diff <= -0.1) {
         tournTitle = "Slight Tournament Pressure"; tournIcon = "⚡";
         tournBody = "You win $tPct% in tournaments compared to $pPct% in practice. There is a small gap. Focusing on consistency could help close it.";
@@ -423,7 +423,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         comebackBody = "When you lose Game 1, you recover $pct% of the time. Improving your reset between games could help turn more matches around.";
       } else {
         comebackTitle = "Start Strong"; comebackIcon = "⚡";
-        comebackBody = "When you lose Game 1, it is difficult to recover. Your comeback rate is $pct%. Focusing on strong starts and between-game adjustments could make a difference.";
+        comebackBody = "After losing Game 1, there is an opportunity to improve how you reset and respond. Your comeback rate is $pct%. Focusing on strong starts and between-game adjustments could make a difference.";
       }
       insights.add({"icon": comebackIcon, "title": comebackTitle, "body": comebackBody, "tier": "pro"});
     }
@@ -436,7 +436,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       final ledPct = (ledRate * 100).round();
       String closeBody; String closeTitle;
       if (ledRate >= 0.5) {
-        closeTitle = "Closing Problem";
+        closeTitle = "Closing Challenge";
         closeBody = "You are losing $ledPct% of matches after winning Game 1. Closing out matches is proving difficult. Maintaining focus and intensity when ahead could make a big difference.";
       } else if (ledRate >= 0.3) {
         closeTitle = "Closing Needs Work";
@@ -465,7 +465,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         } else if (rivalRate >= 0.4) {
           rivalBody = "${rival.key} is your most frequent opponent. You have played ${rival.value} matches and won $rivalPct%. It is a close rivalry. Small adjustments could give you the edge.";
         } else {
-          rivalBody = "${rival.key} currently has the upper hand. Your record in this matchup is $rivalPct%. Reviewing your matches against them may reveal patterns you can exploit next time.";
+          rivalBody = "${rival.key} has had the better results so far. Your record in this matchup is $rivalPct%. Every match gives you more information for next time.";
         }
         insights.add({"icon": "🆚", "title": "Toughest Opponent", "body": rivalBody, "tier": "pro"});
       }
@@ -497,6 +497,51 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         formatTitle = ""; formatBody = "";
       }
       if (formatBody.isNotEmpty) insights.add({"icon": "🏸", "title": formatTitle, "body": formatBody, "tier": "pro"});
+    }
+
+    // ── Opponent Handedness (pro) ──
+    {
+      final rightMatches = completed.where((m) => m.opponentHandedness == "Right").toList();
+      final leftMatches = completed.where((m) => m.opponentHandedness == "Left").toList();
+      if (rightMatches.length >= 3 && leftMatches.length >= 3) {
+        final rightWins = rightMatches.where((m) => _matchWinner(m) == "player").length;
+        final leftWins = leftMatches.where((m) => _matchWinner(m) == "player").length;
+        final rightRate = rightWins / rightMatches.length;
+        final leftRate = leftWins / leftMatches.length;
+        final rightPct = (rightRate * 100).round();
+        final leftPct = (leftRate * 100).round();
+        final diff = rightRate - leftRate;
+        String handBody; String handTitle; String handIcon;
+        if (diff >= 0.2) {
+          handTitle = "Left-Handers Are a Challenge";
+          handIcon = "🤚";
+          handBody = "You win $rightPct% against right-handed opponents but only $leftPct% against left-handers. Left-handed opponents present a different challenge. Their angles and shot patterns are different. Practising against left-handers or working on reading their play could make a real difference.";
+        } else if (diff >= 0.1) {
+          handTitle = "Slight Weakness vs Left-Handers";
+          handIcon = "🤚";
+          handBody = "Your win rate is $rightPct% against right-handers and $leftPct% against left-handers. There is a small gap. Left-handed players bring different angles. Being more aware of this could help.";
+        } else if (diff <= -0.2) {
+          handTitle = "Strong vs Left-Handers";
+          handIcon = "💪";
+          handBody = "You win $leftPct% against left-handed opponents compared to $rightPct% against right-handers. You handle left-handers well. Their angles and patterns do not seem to trouble you.";
+        } else if (diff <= -0.1) {
+          handTitle = "Slight Edge vs Left-Handers";
+          handIcon = "💪";
+          handBody = "You perform slightly better against left-handed opponents, winning $leftPct% compared to $rightPct% against right-handers. Keep building on this.";
+        } else {
+          handTitle = "Consistent vs Both Hands";
+          handIcon = "🏸";
+          handBody = "Your win rate is $rightPct% against right-handers and $leftPct% against left-handers. You perform consistently regardless of handedness. A good sign of all-round ability.";
+        }
+        insights.add({"icon": handIcon, "title": handTitle, "body": handBody, "tier": "pro"});
+      } else if (leftMatches.length >= 3 && rightMatches.length < 3) {
+        final leftWins = leftMatches.where((m) => _matchWinner(m) == "player").length;
+        final leftRate = leftWins / leftMatches.length;
+        final leftPct = (leftRate * 100).round();
+        insights.add({"icon": "🤚", "title": "Left-Hander Record", "body": "You have played ${leftMatches.length} matches against left-handed opponents, winning $leftPct% of them. Keep logging opponent handedness to unlock a full comparison.", "tier": "pro"});
+      } else if (rightMatches.length >= 3 && leftMatches.length < 3) {
+        insights.add({"icon": "🏸", "title": "Handedness Data Building", "body": "You need at least 3 matches against left-handed opponents to unlock your handedness insight. Keep logging opponent handedness when adding matches.", "tier": "pro"});
+      }
     }
 
     // ── Match Dominance Profile (premium) ──
@@ -565,7 +610,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           pressBody = "In matches decided by tight final games, you win $pressPct% of the time. You compete well under pressure. Small improvements in key moments could make a difference.";
         } else {
           pressTitle = "Pressure Needs Work";
-          pressBody = "In matches decided by tight final games, you win $pressPct% of the time. Tight matches are not going your way often enough. Improving focus in decisive moments could help.";
+          pressBody = "In matches decided by tight final games, you win $pressPct% of the time. Tight matches are a great opportunity to develop your decision-making under pressure. Small improvements in key moments could help.";
         }
         insights.add({"icon": "🎯", "title": pressTitle, "body": pressBody, "tier": "premium"});
       }
@@ -587,10 +632,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         g3Body = "You win $g3Pct% of your deciding games. You handle pressure well. Keep building your consistency in close matches.";
       } else if (g3Rate >= 0.3) {
         g3Title = "Decider Needs Work"; g3Icon = "🎯";
-        g3Body = "You win $g3Pct% of your deciding games. Close matches are not going your way often enough. Improving focus and consistency in the final game could help.";
+        g3Body = "You win $g3Pct% of your deciding games. Deciding games are a valuable opportunity for growth. Stronger focus and consistency could help.";
       } else {
         g3Title = "Struggling in Deciders"; g3Icon = "⚡";
-        g3Body = "You win $g3Pct% of your deciding games. When matches reach a final game, results are challenging. Focusing on fitness and between-game resets could make a difference.";
+        g3Body = "You win $g3Pct% of your deciding games. When matches go to a final game, there is an opportunity to improve how you finish strongly. Focusing on fitness and between-game resets could help.";
       }
       insights.add({"icon": g3Icon, "title": g3Title, "body": g3Body, "tier": "premium"});
     }
@@ -833,7 +878,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         final last4 = tournamentsWithResults.sublist(tournamentsWithResults.length - 4);
         final stuckAtQF = last4.every((t) => t.result == 'Quarter Final');
         if (stuckAtQF) {
-          insights.add({"icon": "🚀", "title": "Breaking Through", "body": "You have exited at the Quarter Final stage in your last 4 tournaments. The Semi Final is the next barrier to overcome. Focus on what changes in those deciding matches.", "tier": "pro"});
+          insights.add({"icon": "🚀", "title": "Breaking Through", "body": "You have exited at the Quarter Final stage in your last 4 tournaments. The Semi Final is the next milestone to target in your progression. Focus on what changes in those deciding matches.", "tier": "pro"});
         }
       }
 
@@ -1126,6 +1171,59 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
   }
 
   @override
+  Widget _buildSignUpPrompt(BuildContext context, Color primary) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80, height: 80,
+              decoration: BoxDecoration(
+                color: primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.psychology_rounded, size: 40, color: primary),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              "Unlock Your AI Coach",
+              style: GoogleFonts.interTight(fontSize: 22, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "Your matches are building a picture of your game. Create a free account to unlock your personal AI Coach.",
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => context.goNamed("AuthPage"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 3,
+                ),
+                child: Text("Create Free Account", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "Your match history will carry over when you sign up.",
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget build(BuildContext context) {
     final primary = FlutterFlowTheme.of(context).primary;
     return Scaffold(
@@ -1140,7 +1238,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       ),
       body: SafeArea(
         top: true,
-        child: _loadingStatus
+        child: !loggedIn
+            ? _buildSignUpPrompt(context, primary)
+            : _loadingStatus
             ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(primary)))
             : StreamBuilder<List<TournamentsRecord>>(
                 stream: queryTournamentsRecord(queryBuilder: (q) => q.where("ownerUid", isEqualTo: currentUserUid).orderBy("date", descending: true)),

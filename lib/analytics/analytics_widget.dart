@@ -277,7 +277,7 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
                 const SizedBox(height: 24),
 
                 // ── Points Average ──
-                _sectionTitle("Points Per Match", icon: Icons.bar_chart_rounded, iconColor: Colors.indigo),
+                _sectionTitle("Average Match Margin", icon: Icons.bar_chart_rounded, iconColor: Colors.indigo),
                 const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -319,7 +319,7 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              isAhead ? "You score $diff more points per match 💪" : "Opponent scores $diff more points per match",
+                              isAhead ? "Average Match Margin: +$diff 💪" : "Average Match Margin: -$diff",
                               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isAhead ? Colors.green.shade600 : Colors.red.shade500),
                             ),
                           );
@@ -328,6 +328,47 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 24),
+
+                // ── Current Form ──
+                _sectionTitle("Current Form", icon: Icons.show_chart_rounded, iconColor: Colors.teal),
+                const SizedBox(height: 10),
+                Builder(builder: (context) {
+                  final last10 = completed.take(10).toList();
+                  if (last10.isEmpty) return const SizedBox();
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: FlutterFlowTheme.of(context).secondaryBackground,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Last ${last10.length} matches", style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: last10.map((m) {
+                            final isWin = _matchWinner(m) == "player";
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Container(
+                                width: 22, height: 22,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isWin ? Colors.green.shade400 : Colors.red.shade400,
+                                ),
+                                child: Center(
+                                  child: Text(isWin ? "W" : "L", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
                 const SizedBox(height: 24),
 
                 // ── Head to Head ──
@@ -423,19 +464,25 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text("${emojis[mood] ?? ""} $mood", style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
-                                Text("$wins/$total  •  ${(rate * 100).round()}%", style: TextStyle(fontWeight: FontWeight.w600, color: rate >= 0.5 ? Colors.green : Colors.red)),
+                                if (total >= 3)
+                                  Text("$wins/$total  •  ${(rate * 100).round()}%", style: TextStyle(fontWeight: FontWeight.w600, color: rate >= 0.5 ? Colors.green : Colors.red))
+                                else
+                                  Text("$total ${total == 1 ? 'match' : 'matches'} logged", style: TextStyle(fontWeight: FontWeight.w500, color: Colors.grey.shade400, fontSize: 12)),
                               ],
                             ),
                             const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: rate,
-                                backgroundColor: Colors.red.shade50,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade400),
-                                minHeight: 10,
-                              ),
-                            ),
+                            if (total >= 3)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: rate,
+                                  backgroundColor: Colors.red.shade50,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade400),
+                                  minHeight: 10,
+                                ),
+                              )
+                            else
+                              Text("More matches needed before insights can be generated.", style: TextStyle(fontSize: 11, color: Colors.grey.shade400, fontStyle: FontStyle.italic)),
                           ],
                         ),
                       );

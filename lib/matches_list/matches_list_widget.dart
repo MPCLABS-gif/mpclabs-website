@@ -38,10 +38,18 @@ class _MatchesListWidgetState extends State<MatchesListWidget> {
     final cap = target == 15 ? 17 : 30;
     int playerGames = 0;
     int opponentGames = 0;
+    final g2Played = match.g2Player > 0 || match.g2Opponent > 0;
+    final g3Played = match.g3Player > 0 || match.g3Opponent > 0;
+    // Single game match
+    if (!g2Played && !g3Played) {
+      if (match.g1Player > match.g1Opponent) return 'player';
+      if (match.g1Opponent > match.g1Player) return 'opponent';
+      return null;
+    }
     for (final pair in [
       [match.g1Player, match.g1Opponent],
-      [match.g2Player, match.g2Opponent],
-      [match.g3Player, match.g3Opponent],
+      if (g2Played) [match.g2Player, match.g2Opponent],
+      if (g3Played) [match.g3Player, match.g3Opponent],
     ]) {
       final p = pair[0];
       final o = pair[1];
@@ -254,9 +262,15 @@ class _MatchesListWidgetState extends State<MatchesListWidget> {
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text(
-                                              '${match.g1Player}-${match.g1Opponent}  ${match.g2Player}-${match.g2Opponent}${isG3 ? '  ${match.g3Player}-${match.g3Opponent}' : ''}',
-                                              style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500),
+                                            Builder(
+                                              builder: (context) {
+                                                final g2Played = match.g2Player > 0 || match.g2Opponent > 0;
+                                                final g3Played = match.g3Player > 0 || match.g3Opponent > 0;
+                                                String scoreText = '${match.g1Player}-${match.g1Opponent}';
+                                                if (g2Played) scoreText += '  ${match.g2Player}-${match.g2Opponent}';
+                                                if (g3Played) scoreText += '  ${match.g3Player}-${match.g3Opponent}';
+                                                return Text(scoreText, style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500));
+                                              },
                                             ),
                                             Text(dateStr, style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
                                           ],
