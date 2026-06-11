@@ -244,6 +244,14 @@ class _MatchesListWidgetState extends State<MatchesListWidget> {
                                             ),
                                             const SizedBox(width: 6),
                                           ],
+                                          if (match.partnerName.isNotEmpty) ...[
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                              decoration: BoxDecoration(color: Colors.purple.shade50, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.purple.shade200)),
+                                              child: Text('Doubles', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.purple.shade700)),
+                                            ),
+                                            const SizedBox(width: 6),
+                                          ],
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                             decoration: BoxDecoration(color: match.matchType == 'Tournament' ? Colors.orange.shade100 : Colors.blue.shade100, borderRadius: BorderRadius.circular(20)),
@@ -272,7 +280,7 @@ class _MatchesListWidgetState extends State<MatchesListWidget> {
                                                 return Text(scoreText, style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500));
                                               },
                                             ),
-                                            Text(dateStr, style: TextStyle(color: Colors.grey.shade400, fontSize: 11)),
+                                            Text(dateStr, style: TextStyle(color: Colors.grey.shade700, fontSize: 11)),
                                           ],
                                         ),
                                       ),

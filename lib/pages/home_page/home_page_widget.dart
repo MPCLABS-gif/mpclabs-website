@@ -42,10 +42,18 @@ class _HomePageWidgetState extends State<HomePageWidget> {
     final cap = target == 15 ? 17 : 30;
     int playerGames = 0;
     int opponentGames = 0;
+    final g2Played = match.g2Player > 0 || match.g2Opponent > 0;
+    final g3Played = match.g3Player > 0 || match.g3Opponent > 0;
+    // Single game match
+    if (!g2Played && !g3Played) {
+      if (match.g1Player > match.g1Opponent) return 'player';
+      if (match.g1Opponent > match.g1Player) return 'opponent';
+      return null;
+    }
     for (final pair in [
       [match.g1Player, match.g1Opponent],
-      [match.g2Player, match.g2Opponent],
-      [match.g3Player, match.g3Opponent],
+      if (g2Played) [match.g2Player, match.g2Opponent],
+      if (g3Played) [match.g3Player, match.g3Opponent],
     ]) {
       final p = pair[0];
       final o = pair[1];
@@ -706,7 +714,14 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                         ),
                                         const SizedBox(height: 3),
                                         Text(
-                                          '${match.g1Player}-${match.g1Opponent}  ${match.g2Player}-${match.g2Opponent}${match.g3Player > 0 || match.g3Opponent > 0 ? '  ${match.g3Player}-${match.g3Opponent}' : ''}',
+                                          () {
+                                                  final g2p = match.g2Player > 0 || match.g2Opponent > 0;
+                                                  final g3p = match.g3Player > 0 || match.g3Opponent > 0;
+                                                  String s = '${match.g1Player}-${match.g1Opponent}';
+                                                  if (g2p) s += '  ${match.g2Player}-${match.g2Opponent}';
+                                                  if (g3p) s += '  ${match.g3Player}-${match.g3Opponent}';
+                                                  return s;
+                                                }(),
                                           style: TextStyle(
                                               color: Colors.grey.shade500,
                                               fontSize: 12),

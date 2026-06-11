@@ -56,6 +56,8 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
     _model.opponentNameFocusNode ??= FocusNode();
     _model.partnerNameTextController ??= TextEditingController();
     _model.partnerNameFocusNode ??= FocusNode();
+    _model.opponentPartnerNameTextController ??= TextEditingController();
+    _model.opponentPartnerNameFocusNode ??= FocusNode();
     _model.notesTextFieldTextController ??= TextEditingController();
     _model.notesTextFieldFocusNode ??= FocusNode();
   }
@@ -354,6 +356,8 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
+                      controller: _model.opponentPartnerNameTextController,
+                      focusNode: _model.opponentPartnerNameFocusNode,
                       decoration: InputDecoration(
                         labelText: 'Opponent Partner Name',
                         hintText: 'Enter opponents partner name',
@@ -567,6 +571,7 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                         currentGame: _mode == 'live' ? 1 : gamesPlayed,
                         mood: _selectedMood,
                         partnerName: _model.partnerNameTextController.text,
+                        opponentPartnerName: _model.opponentPartnerNameTextController?.text ?? '',
                         scoringFormat: _scoringFormat,
                       ));
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

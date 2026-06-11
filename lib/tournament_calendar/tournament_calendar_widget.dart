@@ -421,10 +421,10 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
                     const SizedBox(height: 8),
                     Text("Track your upcoming competitions and stay prepared",
-                        style: TextStyle(fontSize: 14, color: Colors.grey.shade400), textAlign: TextAlign.center),
+                        style: TextStyle(fontSize: 15, color: Colors.grey.shade600), textAlign: TextAlign.center),
                     const SizedBox(height: 6),
                     Text("Plan ahead. Stay ready. Perform better.",
-                        style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+                        style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
                     const SizedBox(height: 28),
                     ElevatedButton.icon(
                       onPressed: () => _showAddTournamentSheet(context),

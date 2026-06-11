@@ -81,7 +81,18 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     final cap = target == 15 ? 17 : 30;
     int playerGames = 0;
     int opponentGames = 0;
-    for (final pair in [[match.g1Player, match.g1Opponent],[match.g2Player, match.g2Opponent],[match.g3Player, match.g3Opponent]]) {
+    final g2Played = match.g2Player > 0 || match.g2Opponent > 0;
+    final g3Played = match.g3Player > 0 || match.g3Opponent > 0;
+    if (!g2Played && !g3Played) {
+      if (match.g1Player > match.g1Opponent) return "player";
+      if (match.g1Opponent > match.g1Player) return "opponent";
+      return null;
+    }
+    for (final pair in [
+      [match.g1Player, match.g1Opponent],
+      if (g2Played) [match.g2Player, match.g2Opponent],
+      if (g3Played) [match.g3Player, match.g3Opponent],
+    ]) {
       final p = pair[0]; final o = pair[1];
       if ((p >= target && (p - o) >= 2) || p >= cap) playerGames++;
       else if ((o >= target && (o - p) >= 2) || o >= cap) opponentGames++;
@@ -1194,7 +1205,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             ),
             const SizedBox(height: 12),
             Text(
-              "Your matches are building a picture of your game. Create a free account to unlock your personal AI Coach.",
+              "Your matches are building a picture of your game. Create a free account to unlock your personal AI Coach and access your data across multiple devices.",
               style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.5),
               textAlign: TextAlign.center,
             ),
@@ -1202,7 +1213,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => context.goNamed("AuthPage"),
+                onPressed: () => context.goNamed("RegisterPage"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1215,7 +1226,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
             const SizedBox(height: 12),
             Text(
               "Your match history will carry over when you sign up.",
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
           ],
