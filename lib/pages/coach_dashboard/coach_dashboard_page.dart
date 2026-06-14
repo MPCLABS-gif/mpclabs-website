@@ -174,7 +174,9 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
+          : _club == null
+              ? Center(child: Text('Club not found.', style: TextStyle(color: Colors.grey.shade500)))
+              : RefreshIndicator(
               onRefresh: _loadDashboard,
               child: Column(
                 children: [
