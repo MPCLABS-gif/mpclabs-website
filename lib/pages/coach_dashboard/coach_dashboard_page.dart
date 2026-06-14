@@ -44,6 +44,8 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
   Future<void> _loadDashboard() async {
     setState(() => _loading = true);
     try {
+      // Wait for Firebase Auth to initialise if needed
+      await Future.delayed(const Duration(milliseconds: 500));
       final club = await _clubService.getMyClub();
       if (club == null) { setState(() => _loading = false); return; }
       final players = await _clubService.getClubPlayers(club['clubId']);
