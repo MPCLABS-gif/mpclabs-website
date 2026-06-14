@@ -7,13 +7,13 @@ Future<UserCredential?> registerWithEmail({
   required String name,
   required String email,
   required String password,
+  String accountType = 'player',
 }) async {
   final credential = await FirebaseAuth.instance
       .createUserWithEmailAndPassword(email: email, password: password);
   final user = credential.user;
   if (user != null) {
     await user.updateDisplayName(name);
-    // Create Firestore user document
     await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
@@ -24,6 +24,7 @@ Future<UserCredential?> registerWithEmail({
       'player_name': name,
       'created_time': FieldValue.serverTimestamp(),
       'is_guest': false,
+      'accountType': accountType,
     }, SetOptions(merge: true));
   }
   return credential;

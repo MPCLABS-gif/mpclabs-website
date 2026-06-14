@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/index.dart';
 import '/services/premium_service.dart';
+import '/services/club_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'home_page_model.dart';
@@ -420,6 +421,101 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                         const SizedBox(height: 20),
                       ],
 
+
+                      // ── Club Card ──
+                      FutureBuilder<Map<String, dynamic>?>(
+                        future: loggedIn ? ClubService().getMyClub() : Future.value(null),
+                        builder: (context, clubSnapshot) {
+                          final club = clubSnapshot.data;
+                          final userRecord = currentUserDocument;
+                          final accountType = userRecord?.accountType ?? '';
+                          final clubRole = userRecord?.clubRole ?? '';
+                          final isCoach = accountType == 'coach';
+                          final hasClub = club != null;
+
+                          if (!loggedIn) return const SizedBox.shrink();
+
+                          return Column(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  if (isCoach && hasClub) {
+                                    context.pushNamed('CoachDashboardPage');
+                                  } else if (isCoach && !hasClub) {
+                                    context.pushNamed(CreateClubPage.routeName);
+                                  } else if (!isCoach && hasClub) {
+                                    context.pushNamed(JoinClubPage.routeName);
+                                  } else {
+                                    context.pushNamed(JoinClubPage.routeName);
+                                  }
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: FlutterFlowTheme.of(context).secondaryBackground,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: Colors.grey.shade200),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 44, height: 44,
+                                        decoration: BoxDecoration(
+                                          color: isCoach ? primary.withOpacity(0.1) : Colors.grey.shade100,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Icon(
+                                          isCoach ? Icons.shield_outlined : Icons.group_outlined,
+                                          color: isCoach ? primary : Colors.grey.shade500,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              isCoach ? 'Coach Dashboard' : 'My Club',
+                                              style: GoogleFonts.inter(
+                                                color: FlutterFlowTheme.of(context).primaryText,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              isCoach
+                                                  ? (hasClub ? club['clubName'] ?? 'View your players' : 'Create your club')
+                                                  : (hasClub ? club['clubName'] ?? 'Connected' : 'Connect with your coach'),
+                                              style: TextStyle(
+                                                color: Colors.grey.shade500,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        width: 10, height: 10,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: hasClub ? Colors.green.shade500 : Colors.grey.shade300,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400, size: 20),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                          );
+                        },
+                      ),
                       // ── Navigation Grid ──
                       _sectionHeader('Quick Actions'),
                       const SizedBox(height: 10),

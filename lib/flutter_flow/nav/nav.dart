@@ -155,6 +155,21 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => const ForgotPasswordPage(),
         ),
         FFRoute(
+          name: CreateClubPage.routeName,
+          path: CreateClubPage.routePath,
+          builder: (context, params) => const CreateClubPage(),
+        ),
+        FFRoute(
+          name: JoinClubPage.routeName,
+          path: JoinClubPage.routePath,
+          builder: (context, params) => const JoinClubPage(),
+        ),
+        FFRoute(
+          name: CoachDashboardPage.routeName,
+          path: CoachDashboardPage.routePath,
+          builder: (context, params) => const CoachDashboardPage(),
+        ),
+        FFRoute(
           name: MatchDetailsWidget.routeName,
           path: MatchDetailsWidget.routePath,
           builder: (context, params) => MatchDetailsWidget(

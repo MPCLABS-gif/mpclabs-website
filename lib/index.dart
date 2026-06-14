@@ -10,3 +10,6 @@ export '/ai_coach/ai_coach_widget.dart' show AiCoachWidget;
 export '/premium/premium_widget.dart' show PremiumWidget;export '/pages/auth/register_page.dart' show RegisterPage;
 export '/pages/auth/login_page.dart' show LoginPage;
 export '/pages/auth/forgot_password_page.dart' show ForgotPasswordPage;
+export '/pages/club/create_club_page.dart' show CreateClubPage;
+export '/pages/coach_dashboard/coach_dashboard_page.dart' show CoachDashboardPage;
+export '/pages/club/join_club_page.dart' show JoinClubPage;

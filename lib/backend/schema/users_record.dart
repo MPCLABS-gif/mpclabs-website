@@ -77,6 +77,34 @@ class UsersRecord extends FirestoreRecord {
   String get level => _level ?? "";
   bool hasLevel() => _level != null;
 
+
+  String? _accountType;
+  String get accountType => _accountType ?? '';
+  bool hasAccountType() => _accountType != null;
+
+  String? _clubId;
+  String get clubId => _clubId ?? '';
+  bool hasClubId() => _clubId != null;
+
+  String? _clubRole;
+  String get clubRole => _clubRole ?? '';
+  bool hasClubRole() => _clubRole != null;
+
+  DateTime? _clubLinkedAt;
+  DateTime? get clubLinkedAt => _clubLinkedAt;
+  bool hasClubLinkedAt() => _clubLinkedAt != null;
+
+  bool? _clubConsentAccepted;
+  bool get clubConsentAccepted => _clubConsentAccepted ?? false;
+  bool hasClubConsentAccepted() => _clubConsentAccepted != null;
+
+  String? _coachNotes;
+  String get coachNotes => _coachNotes ?? '';
+  bool hasCoachNotes() => _coachNotes != null;
+
+  bool? _watchListed;
+  bool get watchListed => _watchListed ?? false;
+  bool hasWatchListed() => _watchListed != null;
   String? _ageCategory;
   String get ageCategory => _ageCategory ?? "";
   bool hasAgeCategory() => _ageCategory != null;
@@ -100,6 +128,14 @@ class UsersRecord extends FirestoreRecord {
     _club = snapshotData['club'] as String?;
     _level = snapshotData['level'] as String?;
     _ageCategory = snapshotData['ageCategory'] as String?;
+    _accountType = snapshotData['accountType'] as String?;
+    _clubId = snapshotData['clubId'] as String?;
+    _clubRole = snapshotData['clubRole'] as String?;
+    _clubLinkedAt = snapshotData['clubLinkedAt'] as DateTime?;
+    _clubConsentAccepted = snapshotData['clubConsentAccepted'] as bool?;
+    _coachNotes = snapshotData['coachNotes'] as String?;
+    _watchListed = snapshotData['watchListed'] as bool?;
+
     _createdTime = snapshotData['created_time'] as DateTime?;
     _phoneNumber = snapshotData['phone_number'] as String?;
   }

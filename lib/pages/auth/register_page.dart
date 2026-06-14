@@ -23,6 +23,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscurePassword = true;
   bool _ageConfirmed = false;
   String? _errorMessage;
+  String _accountType = 'player';
 
   @override
   void dispose() {
@@ -40,6 +41,7 @@ class _RegisterPageState extends State<RegisterPage> {
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        accountType: _accountType,
       );
       if (mounted) context.goNamed(HomePageWidget.routeName);
     } on Exception catch (e) {
@@ -166,6 +168,79 @@ class _RegisterPageState extends State<RegisterPage> {
                   const SizedBox(height: 16),
                 ],
 
+
+                // Account type selector
+                Text('How will you use MatchPoint Coach?',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _accountType = 'player'),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: _accountType == 'player' ? primary.withOpacity(0.08) : FlutterFlowTheme.of(context).secondaryBackground,
+                            border: Border.all(
+                              color: _accountType == 'player' ? primary : Colors.grey.shade300,
+                              width: _accountType == 'player' ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              Text('🏸', style: TextStyle(fontSize: 24)),
+                              const SizedBox(height: 4),
+                              Text('Player',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _accountType == 'player' ? primary : Colors.grey.shade600)),
+                              const SizedBox(height: 2),
+                              Text('Track my matches',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _accountType = 'coach'),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: _accountType == 'coach' ? primary.withOpacity(0.08) : FlutterFlowTheme.of(context).secondaryBackground,
+                            border: Border.all(
+                              color: _accountType == 'coach' ? primary : Colors.grey.shade300,
+                              width: _accountType == 'coach' ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              Text('📋', style: TextStyle(fontSize: 24)),
+                              const SizedBox(height: 4),
+                              Text('Coach',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _accountType == 'coach' ? primary : Colors.grey.shade600)),
+                              const SizedBox(height: 2),
+                              Text('Manage my players',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
                 // Age confirmation checkbox
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,

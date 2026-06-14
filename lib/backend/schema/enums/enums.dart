@@ -1,5 +1,16 @@
 import 'package:collection/collection.dart';
 
+
+enum AccountType {
+  player,
+  coach,
+}
+
+enum ClubRole {
+  headCoach,
+  coach,
+  player,
+}
 enum MatchType {
   Tournament,
   Practice,
@@ -18,6 +29,10 @@ T? deserializeEnum<T>(String? value) {
   switch (T) {
     case (MatchType):
       return MatchType.values.deserialize(value) as T?;
+    case (AccountType):
+      return AccountType.values.deserialize(value) as T?;
+    case (ClubRole):
+      return ClubRole.values.deserialize(value) as T?;
     default:
       return null;
   }

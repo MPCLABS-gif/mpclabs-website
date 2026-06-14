@@ -5,3 +5,5 @@ export '/flutter_flow/lat_lng.dart';
 export 'structs/index.dart';
 
 export 'tournaments_record.dart';
+export 'clubs_record.dart';
+export 'fitness_tests_record.dart';
