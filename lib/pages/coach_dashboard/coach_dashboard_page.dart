@@ -32,7 +32,13 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
   @override
   void initState() {
     super.initState();
-    _loadDashboard();
+    if (currentUserDocument != null) {
+      _loadDashboard();
+    } else {
+      authenticatedUserStream.firstWhere((u) => u != null).then((_) {
+        if (mounted) _loadDashboard();
+      });
+    }
   }
 
   @override
