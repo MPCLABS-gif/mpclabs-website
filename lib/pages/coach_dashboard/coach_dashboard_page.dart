@@ -32,13 +32,7 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
   @override
   void initState() {
     super.initState();
-    if (currentUserDocument != null) {
-      _loadDashboard();
-    } else {
-      authenticatedUserStream.firstWhere((u) => u != null).then((_) {
-        if (mounted) _loadDashboard();
-      });
-    }
+    _loadDashboard();
   }
 
   @override
@@ -183,11 +177,12 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
             style: GoogleFonts.interTight(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
         elevation: 0,
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _club == null
-              ? Center(child: Text('Club not found.', style: TextStyle(color: Colors.grey.shade500)))
-              : RefreshIndicator(
+      body: StreamBuilder(
+              stream: authenticatedUserStream,
+              builder: (context, _) {
+                if (_loading) return const Center(child: CircularProgressIndicator());
+                if (_club == null) return Center(child: Text('No club found.', style: TextStyle(color: Colors.grey.shade500)));
+                return RefreshIndicator(
               onRefresh: _loadDashboard,
               child: Column(
                 children: [
@@ -197,6 +192,8 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
                   Expanded(child: _buildPlayerList(primary)),
                 ],
               ),
+            );
+              },
             ),
     );
   }
