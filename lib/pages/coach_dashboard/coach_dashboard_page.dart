@@ -5,6 +5,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/services/club_service.dart';
 import '/auth/firebase_auth/auth_util.dart';
+import '/backend/schema/users_record.dart';
 
 class CoachDashboardPage extends StatefulWidget {
   const CoachDashboardPage({super.key});
@@ -24,16 +25,11 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
   List<Map<String, dynamic>> _players = [];
   List<Map<String, dynamic>> _filteredPlayers = [];
   bool _loading = true;
+  bool _dashboardLoaded = false;
   String _filterTab = 'All';
   String _searchQuery = '';
 
   final List<String> _tabs = ['All', 'Under 15', 'Senior', 'Alerts'];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadDashboard();
-  }
 
   @override
   void dispose() {
@@ -41,15 +37,12 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
     super.dispose();
   }
 
-  Future<void> _loadDashboard() async {
+  Future<void> _loadDashboard(String clubId) async {
+    if (!mounted) return;
     setState(() => _loading = true);
     try {
-      // Use currentUserDocument which is already hydrated by FlutterFlow auth
-      final userRecord = currentUserDocument;
-      final clubId = userRecord?.clubId ?? '';
-      if (clubId.isEmpty) { setState(() => _loading = false); return; }
-      final clubDoc = await FirebaseFirestore.instance.collection('clubs').doc(clubId).get();
-      if (!clubDoc.exists) { setState(() => _loading = false); return; }
+      final clubDoc = await _db.collection('clubs').doc(clubId).get();
+      if (!clubDoc.exists) { if (mounted) setState(() { _loading = false; }); return; }
       final club = {'clubId': clubDoc.id, ...clubDoc.data()!};
       final players = await _clubService.getClubPlayers(club['clubId']);
       final enriched = await Future.wait(players.map((p) => _enrichPlayer(p)));
@@ -159,7 +152,8 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
     final uid = player['uid'] as String;
     final current = player['watchListed'] == true;
     await _db.collection('users').doc(uid).update({'watchListed': !current});
-    await _loadDashboard();
+    final clubId = _club?['clubId'] as String?;
+    if (clubId != null) await _loadDashboard(clubId);
   }
 
   @override
@@ -177,24 +171,30 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
             style: GoogleFonts.interTight(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
         elevation: 0,
       ),
-      body: StreamBuilder(
-              stream: authenticatedUserStream,
-              builder: (context, _) {
-                if (_loading) return const Center(child: CircularProgressIndicator());
-                if (_club == null) return Center(child: Text('No club found.', style: TextStyle(color: Colors.grey.shade500)));
-                return RefreshIndicator(
-              onRefresh: _loadDashboard,
-              child: Column(
-                children: [
-                  _buildSummaryBar(primary),
-                  _buildSearchBar(),
-                  _buildFilterTabs(primary),
-                  Expanded(child: _buildPlayerList(primary)),
-                ],
-              ),
-            );
-              },
+      body: StreamBuilder<UsersRecord?>(
+        stream: authenticatedUserStream,
+        builder: (context, snapshot) {
+          final userRecord = snapshot.data;
+          final clubId = userRecord?.clubId ?? '';
+          if (clubId.isNotEmpty && !_dashboardLoaded) {
+            _dashboardLoaded = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) => _loadDashboard(clubId));
+          }
+          if (_loading) return const Center(child: CircularProgressIndicator());
+          if (_club == null) return Center(child: Text('No players yet. Share your club code to get started.', style: TextStyle(color: Colors.grey.shade500), textAlign: TextAlign.center));
+          return RefreshIndicator(
+            onRefresh: () => _loadDashboard(_club!['clubId']),
+            child: Column(
+              children: [
+                _buildSummaryBar(primary),
+                _buildSearchBar(),
+                _buildFilterTabs(primary),
+                Expanded(child: _buildPlayerList(primary)),
+              ],
             ),
+          );
+        },
+      ),
     );
   }
 
