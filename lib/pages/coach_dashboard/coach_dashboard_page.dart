@@ -53,7 +53,8 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
       });
       if (mounted) setState(() { _club = club; _players = enriched; _loading = false; _applyFilters(); });
     } catch (e) {
-      if (mounted) setState(() => _loading = false);
+      debugPrint('CoachDashboard error: $e');
+      if (mounted) setState(() { _loading = false; _club = {'clubName': 'Error: $e', 'clubId': ''}; });
     }
   }
 
