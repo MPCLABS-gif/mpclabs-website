@@ -44,10 +44,13 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
   Future<void> _loadDashboard() async {
     setState(() => _loading = true);
     try {
-      // Wait for Firebase Auth to initialise if needed
-      await Future.delayed(const Duration(milliseconds: 500));
-      final club = await _clubService.getMyClub();
-      if (club == null) { setState(() => _loading = false); return; }
+      // Use currentUserDocument which is already hydrated by FlutterFlow auth
+      final userRecord = currentUserDocument;
+      final clubId = userRecord?.clubId ?? '';
+      if (clubId.isEmpty) { setState(() => _loading = false); return; }
+      final clubDoc = await FirebaseFirestore.instance.collection('clubs').doc(clubId).get();
+      if (!clubDoc.exists) { setState(() => _loading = false); return; }
+      final club = {'clubId': clubDoc.id, ...clubDoc.data()!};
       final players = await _clubService.getClubPlayers(club['clubId']);
       final enriched = await Future.wait(players.map((p) => _enrichPlayer(p)));
       enriched.sort((a, b) {
