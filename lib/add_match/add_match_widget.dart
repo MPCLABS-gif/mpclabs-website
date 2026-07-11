@@ -282,7 +282,7 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                       Expanded(
                         child: FlutterFlowDropDown<String>(
                           controller: _model.matchFormatValueController ??= FormFieldController<String>(_model.matchFormatValue ??= 'Singles'),
-                          options: const ['Singles', 'Doubles'],
+                          options: const ['Singles', 'Doubles', 'Mixed Doubles'],
                           onChanged: (val) => safeSetState(() => _model.matchFormatValue = val),
                           width: double.infinity, height: 50.0,
                           textStyle: FlutterFlowTheme.of(context).bodyMedium,
@@ -340,7 +340,7 @@ class _AddMatchWidgetState extends State<AddMatchWidget> {
                   const SizedBox(height: 12),
 
                   // Partner names (only show when Doubles selected)
-                  if (_model.matchFormatValue == 'Doubles') ...[
+                  if (_model.matchFormatValue == 'Doubles' || _model.matchFormatValue == 'Mixed Doubles') ...[
                     TextFormField(
                       controller: _model.partnerNameTextController,
                       focusNode: _model.partnerNameFocusNode,

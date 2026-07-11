@@ -83,7 +83,7 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
                   final picked = await showDatePicker(
                     context: context,
                     initialDate: selectedDate,
-                    firstDate: DateTime.now(),
+                    firstDate: DateTime.now().subtract(const Duration(days: 365 * 5)),
                     lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
                   );
                   if (picked != null) setModalState(() => selectedDate = picked);
@@ -182,13 +182,40 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
     );
   }
 
+  Map<String, String> _getDisciplines(TournamentsRecord t) {
+    final raw = t.snapshotData['disciplines'];
+    if (raw is Map) {
+      return {
+        'singles': (raw['singles'] ?? '').toString(),
+        'doubles': (raw['doubles'] ?? '').toString(),
+        'mixedDoubles': (raw['mixedDoubles'] ?? '').toString(),
+      };
+    }
+    // Backward compat: migrate old single result to singles
+    final oldResult = t.result;
+    return {
+      'singles': oldResult,
+      'doubles': '',
+      'mixedDoubles': '',
+    };
+  }
+
   void _showEditSheet(BuildContext context, TournamentsRecord t) {
     final nameController = TextEditingController(text: t.name);
     final locationController = TextEditingController(text: t.location);
-    final levelController = TextEditingController(text: t.level);
     final notesController = TextEditingController(text: t.notes);
-    String? selectedResult = t.result.isNotEmpty ? t.result : null;
     DateTime selectedDate = t.date ?? DateTime.now().add(const Duration(days: 7));
+    String? selectedLevel = t.level.isNotEmpty ? t.level : null;
+
+    final existing = _getDisciplines(t);
+    bool singlesEntered = existing['singles']!.isNotEmpty;
+    bool doublesEntered = existing['doubles']!.isNotEmpty;
+    bool mixedEntered = existing['mixedDoubles']!.isNotEmpty;
+    String? singlesResult = existing['singles']!.isNotEmpty ? existing['singles'] : null;
+    String? doublesResult = existing['doubles']!.isNotEmpty ? existing['doubles'] : null;
+    String? mixedResult = existing['mixedDoubles']!.isNotEmpty ? existing['mixedDoubles'] : null;
+
+    final resultOptions = ["Gold", "Silver", "Bronze", "4th Place", "Semi Final", "Quarter Final", "Round of 16", "Round of 32", "Group Stage", "Did Not Place", "Withdrew"];
 
     showModalBottomSheet(
       context: context,
@@ -197,71 +224,150 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Padding(
           padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20), decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-              Text("Edit Tournament", style: GoogleFonts.interTight(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 16),
-              TextField(controller: nameController, decoration: InputDecoration(labelText: "Tournament Name", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showDatePicker(context: context, initialDate: selectedDate, firstDate: DateTime.now().subtract(const Duration(days: 365)), lastDate: DateTime.now().add(const Duration(days: 365 * 2)));
-                  if (picked != null) setModalState(() => selectedDate = picked);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20), decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+                Text("Edit Tournament", style: GoogleFonts.interTight(fontWeight: FontWeight.bold, fontSize: 18)),
+                const SizedBox(height: 16),
+                TextField(controller: nameController, decoration: InputDecoration(labelText: "Tournament Name", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(context: context, initialDate: selectedDate, firstDate: DateTime.now().subtract(const Duration(days: 365)), lastDate: DateTime.now().add(const Duration(days: 365 * 2)));
+                    if (picked != null) setModalState(() => selectedDate = picked);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(DateFormat("dd MMM yyyy").format(selectedDate), style: const TextStyle(fontSize: 15)),
+                        const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(controller: locationController, decoration: InputDecoration(labelText: "Location", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedLevel,
+                  decoration: InputDecoration(labelText: "Level", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                  hint: const Text("Select level"),
+                  items: ["Local", "County", "Regional", "National", "International"].map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
+                  onChanged: (val) => setModalState(() => selectedLevel = val),
+                ),
+                const SizedBox(height: 12),
+                TextField(controller: notesController, maxLines: 2, decoration: InputDecoration(labelText: "Notes", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))),
+                const SizedBox(height: 20),
+                Text("Disciplines Entered", style: GoogleFonts.interTight(fontWeight: FontWeight.bold, fontSize: 15)),
+                const SizedBox(height: 4),
+                Text("Tick each discipline you entered and select your result.", style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                const SizedBox(height: 12),
+                // Singles
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(DateFormat("dd MMM yyyy").format(selectedDate), style: const TextStyle(fontSize: 15)),
-                      const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+                      Row(
+                        children: [
+                          Checkbox(value: singlesEntered, onChanged: (v) => setModalState(() { singlesEntered = v ?? false; if (!singlesEntered) singlesResult = null; })),
+                          const Text("Singles", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                        ],
+                      ),
+                      if (singlesEntered) DropdownButtonFormField<String>(
+                        value: singlesResult,
+                        decoration: InputDecoration(labelText: "Singles Result", filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                        hint: const Text("Select result"),
+                        items: resultOptions.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                        onChanged: (val) => setModalState(() => singlesResult = val),
+                      ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(controller: locationController, decoration: InputDecoration(labelText: "Location", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))),
-              const SizedBox(height: 12),
-              TextField(controller: levelController, decoration: InputDecoration(labelText: "Level", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))),
-              const SizedBox(height: 12),
-              TextField(controller: notesController, maxLines: 2, decoration: InputDecoration(labelText: "Notes", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none))),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: selectedResult,
-                decoration: InputDecoration(labelText: "Tournament Result", filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
-                hint: const Text("Select result"),
-                items: ["Gold", "Silver", "Bronze", "4th Place", "Semi Final", "Quarter Final", "Round of 16", "Round of 32", "Group Stage", "Did Not Place", "Withdrew"].map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-                onChanged: (val) => setModalState(() => selectedResult = val),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  try {
-                    await t.reference.update({
-                      "name": nameController.text,
-                      "date": selectedDate,
-                      "location": locationController.text,
-                      "level": levelController.text,
-                      "notes": notesController.text,
-                      "result": selectedResult ?? "",
-                    });
-                    if (context.mounted) Navigator.pop(context);
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error updating tournament: $e')),
-                      );
+                const SizedBox(height: 8),
+                // Doubles
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Checkbox(value: doublesEntered, onChanged: (v) => setModalState(() { doublesEntered = v ?? false; if (!doublesEntered) doublesResult = null; })),
+                          const Text("Doubles", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                        ],
+                      ),
+                      if (doublesEntered) DropdownButtonFormField<String>(
+                        value: doublesResult,
+                        decoration: InputDecoration(labelText: "Doubles Result", filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                        hint: const Text("Select result"),
+                        items: resultOptions.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                        onChanged: (val) => setModalState(() => doublesResult = val),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Mixed Doubles
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(8)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Checkbox(value: mixedEntered, onChanged: (v) => setModalState(() { mixedEntered = v ?? false; if (!mixedEntered) mixedResult = null; })),
+                          const Text("Mixed Doubles", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                        ],
+                      ),
+                      if (mixedEntered) DropdownButtonFormField<String>(
+                        value: mixedResult,
+                        decoration: InputDecoration(labelText: "Mixed Doubles Result", filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none)),
+                        hint: const Text("Select result"),
+                        items: resultOptions.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                        onChanged: (val) => setModalState(() => mixedResult = val),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      await t.reference.update({
+                        "name": nameController.text,
+                        "date": selectedDate,
+                        "location": locationController.text,
+                        "level": selectedLevel ?? "",
+                        "notes": notesController.text,
+                        "disciplines": {
+                          "singles": singlesEntered ? (singlesResult ?? "") : "",
+                          "doubles": doublesEntered ? (doublesResult ?? "") : "",
+                          "mixedDoubles": mixedEntered ? (mixedResult ?? "") : "",
+                        },
+                      });
+                      if (context.mounted) Navigator.pop(context);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error updating tournament: $e')));
+                      }
                     }
-                  }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: FlutterFlowTheme.of(context).primary, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                child: Text("Save Changes", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: FlutterFlowTheme.of(context).primary, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  child: Text("Save Changes", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         ),
       ),
@@ -547,21 +653,50 @@ class _TournamentCalendarWidgetState extends State<TournamentCalendarWidget> {
                     ),
                   ],
                   const SizedBox(height: 6),
-                  if (isPast && t.result.isNotEmpty) ...[
-                    Row(
-                      children: [
-                        Icon(Icons.emoji_events, size: 12, color: _resultColor(t.result)),
-                        const SizedBox(width: 4),
-                        Text(t.result, style: TextStyle(fontSize: 11, color: _resultColor(t.result), fontWeight: FontWeight.w700)),
-                      ],
-                    ),
+                  if (isPast) ...[
+                    Builder(builder: (_) {
+                      final d = _getDisciplines(t);
+                      final hasAny = d.values.any((v) => v.isNotEmpty);
+                      if (!hasAny) {
+                        return Row(children: [
+                          Icon(Icons.lightbulb_outline, size: 12, color: Colors.orange.shade400),
+                          const SizedBox(width: 4),
+                          Text("Add your result", style: TextStyle(fontSize: 11, color: Colors.orange.shade600, fontWeight: FontWeight.w500)),
+                        ]);
+                      }
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (d['singles']!.isNotEmpty) Row(children: [
+                            Icon(Icons.emoji_events, size: 12, color: _resultColor(d['singles']!)),
+                            const SizedBox(width: 4),
+                            Text("Singles. ${d['singles']}", style: TextStyle(fontSize: 11, color: _resultColor(d['singles']!), fontWeight: FontWeight.w700)),
+                          ]),
+                          if (d['doubles']!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Row(children: [
+                              Icon(Icons.emoji_events, size: 12, color: _resultColor(d['doubles']!)),
+                              const SizedBox(width: 4),
+                              Text("Doubles. ${d['doubles']}", style: TextStyle(fontSize: 11, color: _resultColor(d['doubles']!), fontWeight: FontWeight.w700)),
+                            ]),
+                          ],
+                          if (d['mixedDoubles']!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Row(children: [
+                              Icon(Icons.emoji_events, size: 12, color: _resultColor(d['mixedDoubles']!)),
+                              const SizedBox(width: 4),
+                              Text("Mixed Doubles. ${d['mixedDoubles']}", style: TextStyle(fontSize: 11, color: _resultColor(d['mixedDoubles']!), fontWeight: FontWeight.w700)),
+                            ]),
+                          ],
+                        ],
+                      );
+                    }),
                   ] else ...[
                     Row(
                       children: [
                         Icon(Icons.lightbulb_outline, size: 12, color: Colors.orange.shade400),
                         const SizedBox(width: 4),
-                        Text(isPast ? "Add your result" : "Prepare your strategy",
-                            style: TextStyle(fontSize: 11, color: Colors.orange.shade600, fontWeight: FontWeight.w500)),
+                        Text("Prepare your strategy", style: TextStyle(fontSize: 11, color: Colors.orange.shade600, fontWeight: FontWeight.w500)),
                       ],
                     ),
                   ],

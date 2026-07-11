@@ -41,10 +41,19 @@ class ClubService {
     };
   }
 
+  String _normalizeClubCode(String raw) {
+    final cleaned = raw.toUpperCase().replaceAll('-', '').replaceAll(' ', '').trim();
+    if (cleaned.startsWith('MPCC')) {
+      return 'MPC-C-${cleaned.substring(4)}';
+    } else if (cleaned.startsWith('MPC')) {
+      return 'MPC-${cleaned.substring(3)}';
+    }
+    return cleaned;
+  }
   Future<Map<String, dynamic>?> findClubByPlayerCode(String code) async {
     final query = await _db
         .collection('clubs')
-        .where('playerCode', isEqualTo: code.toUpperCase().trim())
+        .where('playerCode', isEqualTo: _normalizeClubCode(code))
         .limit(1)
         .get();
     if (query.docs.isEmpty) return null;
@@ -55,7 +64,7 @@ class ClubService {
   Future<Map<String, dynamic>?> findClubByCoachCode(String code) async {
     final query = await _db
         .collection('clubs')
-        .where('coachCode', isEqualTo: code.toUpperCase().trim())
+        .where('coachCode', isEqualTo: _normalizeClubCode(code))
         .limit(1)
         .get();
     if (query.docs.isEmpty) return null;
@@ -107,7 +116,7 @@ class ClubService {
         .collection('users')
         .where('clubId', isEqualTo: clubId)
         .where('clubRole', isEqualTo: 'player')
-        .get();
+        .get(const GetOptions(source: Source.server));
     return query.docs.map((d) => {'uid': d.id, ...d.data()}).toList();
   }
 

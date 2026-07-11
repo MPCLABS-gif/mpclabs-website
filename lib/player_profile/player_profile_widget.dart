@@ -8,6 +8,7 @@ import '/services/premium_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class PlayerProfileWidget extends StatefulWidget {
@@ -540,6 +541,39 @@ class _PlayerProfileWidgetState extends State<PlayerProfileWidget> {
                               style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4)),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    StreamBuilder<List<MatchesRecord>>(
+                      stream: queryMatchesRecord(
+                        queryBuilder: (q) => q.where("ownerUid", isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? ''),
+                      ),
+                      builder: (context, shareSnapshot) {
+                        final shareMatches = shareSnapshot.data ?? [];
+                        int shareWins = 0;
+                        for (final m in shareMatches) {
+                          int pg = 0, og = 0;
+                          void cg(int p, int o) { if (p > 0 || o > 0) { if (p > o) pg++; else og++; } }
+                          cg(m.g1Player, m.g1Opponent);
+                          cg(m.g2Player, m.g2Opponent);
+                          cg(m.g3Player, m.g3Opponent);
+                          if (pg >= 2) shareWins++;
+                        }
+                        final shareWinRate = shareMatches.isEmpty ? 0 : ((shareWins / shareMatches.length) * 100).round();
+                        final shareMessage = shareMatches.isEmpty
+                          ? "🏸 I'm improving my badminton with MatchPoint Coach. Track your matches, analyse your performance and get AI coaching insights. Give it a try!\n\niOS: https://apple.co/4eEXhJo\nAndroid: https://bit.ly/49KmCOy"
+                          : "🏸 I've played ${shareMatches.length} matches and my win rate is $shareWinRate% using MatchPoint Coach. Track your badminton, analyse your performance and get AI coaching insights. Give it a try!\n\niOS: https://apple.co/4eEXhJo\nAndroid: https://bit.ly/49KmCOy";
+                        return OutlinedButton.icon(
+                          onPressed: () => Share.share(shareMessage),
+                          icon: const Icon(Icons.share_rounded, size: 18),
+                          label: const Text('Invite Your Badminton Friends', style: TextStyle(fontWeight: FontWeight.bold)),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            side: BorderSide(color: FlutterFlowTheme.of(context).primary.withOpacity(0.4)),
+                            foregroundColor: FlutterFlowTheme.of(context).primary,
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton.icon(

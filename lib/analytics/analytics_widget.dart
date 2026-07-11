@@ -82,7 +82,13 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
       ),
       body: SafeArea(
         top: true,
-        child: StreamBuilder<List<MatchesRecord>>(
+        child: StreamBuilder<List<TournamentsRecord>>(
+          stream: queryTournamentsRecord(
+            queryBuilder: (q) => q.where("ownerUid", isEqualTo: currentUserUid),
+          ),
+          builder: (context, tournamentSnapshot) {
+            final tournaments = tournamentSnapshot.data ?? [];
+            return StreamBuilder<List<MatchesRecord>>(
           stream: queryMatchesRecord(
             queryBuilder: (q) => q
                 .where("ownerUid", isEqualTo: currentUserUid)
@@ -249,6 +255,79 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
                   ],
                 ),
                 const SizedBox(height: 24),
+
+                // ── Tournament Medals ──
+                Builder(builder: (context) {
+                  final past = tournaments.where((t) => t.date != null && !t.date!.isAfter(DateTime.now())).toList();
+                  if (past.isEmpty) return const SizedBox();
+
+                  final Map<String, Map<String, int>> medals = {
+                    'Singles': {'Gold': 0, 'Silver': 0, 'Bronze': 0},
+                    'Doubles': {'Gold': 0, 'Silver': 0, 'Bronze': 0},
+                    'Mixed Doubles': {'Gold': 0, 'Silver': 0, 'Bronze': 0},
+                  };
+
+                  for (final t in past) {
+                    final raw = t.snapshotData['disciplines'];
+                    if (raw is Map) {
+                      void count(String discipline, String key) {
+                        final result = (raw[key] ?? '').toString();
+                        if (result == 'Gold') medals[discipline]!['Gold'] = medals[discipline]!['Gold']! + 1;
+                        else if (result == 'Silver') medals[discipline]!['Silver'] = medals[discipline]!['Silver']! + 1;
+                        else if (result == 'Bronze') medals[discipline]!['Bronze'] = medals[discipline]!['Bronze']! + 1;
+                      }
+                      count('Singles', 'singles');
+                      count('Doubles', 'doubles');
+                      count('Mixed Doubles', 'mixedDoubles');
+                    }
+                  }
+
+                  final hasAnyMedal = medals.values.any((m) => m.values.any((v) => v > 0));
+                  if (!hasAnyMedal) return const SizedBox();
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _sectionTitle("Tournament Medals", icon: Icons.military_tech_rounded, iconColor: const Color(0xFFFFD700)),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: FlutterFlowTheme.of(context).secondaryBackground,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: medals.entries.map((entry) {
+                            final discipline = entry.key;
+                            final m = entry.value;
+                            final total = m['Gold']! + m['Silver']! + m['Bronze']!;
+                            if (total == 0) return const SizedBox();
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(discipline, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      if (m['Gold']! > 0) _medalChip('🥇', m['Gold']!, const Color(0xFFFFD700)),
+                                      if (m['Gold']! > 0) const SizedBox(width: 8),
+                                      if (m['Silver']! > 0) _medalChip('🥈', m['Silver']!, const Color(0xFFC0C0C0)),
+                                      if (m['Silver']! > 0) const SizedBox(width: 8),
+                                      if (m['Bronze']! > 0) _medalChip('🥉', m['Bronze']!, const Color(0xFFCD7F32)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                }),
 
                 // ── Game 3 & Comebacks ──
                 _sectionTitle("Performance Under Pressure", icon: Icons.psychology_rounded, iconColor: Colors.purple),
@@ -500,6 +579,8 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
               ],
             );
           },
+        );
+          },
         ),
       ),
     );
@@ -615,6 +696,25 @@ class _AnalyticsWidgetState extends State<AnalyticsWidget> {
           ),
           const SizedBox(height: 6),
           Text("$wins wins from $total ${total == 1 ? 'match' : 'matches'}", style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+        ],
+      ),
+    );
+  }
+
+  Widget _medalChip(String emoji, int count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 4),
+          Text('x$count', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color.withOpacity(0.8))),
         ],
       ),
     );

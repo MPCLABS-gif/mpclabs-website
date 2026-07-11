@@ -126,6 +126,39 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     return {'slowStart': slowStart, 'tiredStat': tiredStat, 'ledLost': ledLost};
   }
 
+  // Returns the best result across all disciplines for a tournament
+  String _bestDisciplineResult(TournamentsRecord t) {
+    final resultRanking = {
+      'Gold': 1, 'Silver': 2, 'Bronze': 3, '4th Place': 4,
+      'Semi Final': 5, 'Quarter Final': 6, 'Round of 16': 7,
+      'Round of 32': 8, 'Group Stage': 9, 'Did Not Place': 10, 'Withdrew': 11
+    };
+    final raw = t.snapshotData['disciplines'];
+    if (raw is Map) {
+      final results = [
+        (raw['singles'] ?? '').toString(),
+        (raw['doubles'] ?? '').toString(),
+        (raw['mixedDoubles'] ?? '').toString(),
+      ].where((r) => r.isNotEmpty && r != 'Withdrew').toList();
+      if (results.isEmpty) return t.result;
+      return results.reduce((a, b) => (resultRanking[a] ?? 99) <= (resultRanking[b] ?? 99) ? a : b);
+    }
+    return t.result;
+  }
+
+  // Returns all discipline results for a tournament as a readable string
+  String _disciplineSummary(TournamentsRecord t) {
+    final raw = t.snapshotData['disciplines'];
+    if (raw is Map) {
+      final parts = <String>[];
+      if ((raw['singles'] ?? '').toString().isNotEmpty) parts.add('Singles: ${raw['singles']}');
+      if ((raw['doubles'] ?? '').toString().isNotEmpty) parts.add('Doubles: ${raw['doubles']}');
+      if ((raw['mixedDoubles'] ?? '').toString().isNotEmpty) parts.add('Mixed Doubles: ${raw['mixedDoubles']}');
+      if (parts.isNotEmpty) return parts.join('. ');
+    }
+    return t.result;
+  }
+
   List<Map<String, dynamic>> _generateInsights(List<MatchesRecord> matches, {List<TournamentsRecord> tournaments = const []}) {
     final completed = matches.where((m) => _matchWinner(m) != null).toList();
     if (completed.isEmpty) return [];
@@ -794,15 +827,15 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       'Round of 32': 8, 'Group Stage': 9, 'Did Not Place': 10, 'Withdrew': 11
     };
 
-    final tournamentsWithResults = tournaments.where((t) => t.result.isNotEmpty && t.result != 'Withdrew').toList();
+    final tournamentsWithResults = tournaments.where((t) => _bestDisciplineResult(t).isNotEmpty && _bestDisciplineResult(t) != 'Withdrew').toList();
     tournamentsWithResults.sort((a, b) => (a.date ?? DateTime(0)).compareTo(b.date ?? DateTime(0)));
 
     if (tournamentsWithResults.isNotEmpty) {
       // Best Result
       final bestT = tournamentsWithResults.reduce((a, b) =>
-        (resultRanking[a.result] ?? 99) <= (resultRanking[b.result] ?? 99) ? a : b);
-      final bestResult = bestT.result;
-      final bestCount = tournamentsWithResults.where((t) => t.result == bestResult).length;
+        (resultRanking[_bestDisciplineResult(a)] ?? 99) <= (resultRanking[_bestDisciplineResult(b)] ?? 99) ? a : b);
+      final bestResult = _bestDisciplineResult(bestT);
+      final bestCount = tournamentsWithResults.where((t) => _bestDisciplineResult(t) == bestResult).length;
       final bestCountStr = bestCount > 1 ? 'which you have reached $bestCount times' : 'your best performance so far';
 
       String bestBody;
@@ -818,23 +851,23 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       insights.add({"icon": "🏆", "title": "Best Result", "body": bestBody, "tier": "pro"});
 
       // Champion's Challenge
-      final goldResults = tournamentsWithResults.where((t) => t.result == 'Gold').toList();
+      final goldResults = tournamentsWithResults.where((t) => _bestDisciplineResult(t) == 'Gold').toList();
       if (goldResults.isNotEmpty) {
         final goldName = goldResults.last.name;
         insights.add({"icon": "🥇", "title": "Champion's Challenge", "body": "You won Gold at $goldName. That is a significant achievement. The challenge now is to maintain that level and defend your title at the next opportunity.", "tier": "pro"});
       }
 
       // Finals Record
-      final finals = tournamentsWithResults.where((t) => t.result == 'Gold' || t.result == 'Silver').toList();
+      final finals = tournamentsWithResults.where((t) => _bestDisciplineResult(t) == 'Gold' || _bestDisciplineResult(t) == 'Silver').toList();
       if (finals.length >= 2) {
-        final wins = finals.where((t) => t.result == 'Gold').length;
+        final wins = finals.where((t) => _bestDisciplineResult(t) == 'Gold').length;
         insights.add({"icon": "🏅", "title": "Finals Record", "body": "You have reached ${finals.length} Finals and won $wins of them. You perform well when competing for titles.", "tier": "pro"});
       }
 
       // Medal Hunter
-      final medals = tournamentsWithResults.where((t) => ['Gold', 'Silver', 'Bronze'].contains(t.result)).toList();
+      final medals = tournamentsWithResults.where((t) => ['Gold', 'Silver', 'Bronze'].contains(_bestDisciplineResult(t))).toList();
       final last6 = tournamentsWithResults.length >= 6 ? tournamentsWithResults.sublist(tournamentsWithResults.length - 6) : tournamentsWithResults;
-      final medalsInLast6 = last6.where((t) => ['Gold', 'Silver', 'Bronze'].contains(t.result)).length;
+      final medalsInLast6 = last6.where((t) => ['Gold', 'Silver', 'Bronze'].contains(_bestDisciplineResult(t))).length;
       if (medals.length >= 3 || medalsInLast6 >= 2) {
         insights.add({"icon": "🎯", "title": "Medal Hunter", "body": "You have earned medals in ${medals.length} of your last ${tournamentsWithResults.length} tournaments. You are regularly putting yourself in contention for the top positions.", "tier": "pro"});
       }
@@ -842,7 +875,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (tournamentsWithResults.length >= 3) {
         // Tournament Progression
         final last3 = tournamentsWithResults.sublist(tournamentsWithResults.length - 3);
-        final r1 = last3[0].result; final r2 = last3[1].result; final r3 = last3[2].result;
+        final r1 = _bestDisciplineResult(last3[0]); final r2 = _bestDisciplineResult(last3[1]); final r3 = _bestDisciplineResult(last3[2]);
         final rank1 = resultRanking[r1] ?? 99;
         final rank2 = resultRanking[r2] ?? 99;
         final rank3 = resultRanking[r3] ?? 99;
@@ -852,7 +885,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
         // Tournament Consistency
         final resultCounts = <String, int>{};
-        for (final t in tournamentsWithResults) { resultCounts[t.result] = (resultCounts[t.result] ?? 0) + 1; }
+        for (final t in tournamentsWithResults) { final r = _bestDisciplineResult(t); resultCounts[r] = (resultCounts[r] ?? 0) + 1; }
         final mostCommon = resultCounts.entries.reduce((a, b) => a.value >= b.value ? a : b);
         final summaryParts = resultCounts.entries.toList()
           ..sort((a, b) => (resultRanking[a.key] ?? 99).compareTo(resultRanking[b.key] ?? 99));
@@ -868,17 +901,17 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
         // Tournament Form
         final last3Results = tournamentsWithResults.sublist(tournamentsWithResults.length - 3);
-        final allStrongForm = last3Results.every((t) => (resultRanking[t.result] ?? 99) <= 5);
+        final allStrongForm = last3Results.every((t) => (resultRanking[_bestDisciplineResult(t)] ?? 99) <= 5);
         if (allStrongForm) {
           insights.add({"icon": "🔥", "title": "Tournament Form", "body": "You have reached the Semi Final or better in your last 3 consecutive tournaments. Your tournament form is currently strong.", "tier": "pro"});
         }
 
         // Bounce Back
         for (int i = 1; i < tournamentsWithResults.length; i++) {
-          final prev = resultRanking[tournamentsWithResults[i-1].result] ?? 99;
-          final curr = resultRanking[tournamentsWithResults[i].result] ?? 99;
+          final prev = resultRanking[_bestDisciplineResult(tournamentsWithResults[i-1])] ?? 99;
+          final curr = resultRanking[_bestDisciplineResult(tournamentsWithResults[i])] ?? 99;
           if (prev > 7 && curr <= 6) {
-            insights.add({"icon": "💪", "title": "Bounce Back Ability", "body": "After an early exit, you responded by reaching the ${tournamentsWithResults[i].result} or better in your next tournament. Strong players learn, adapt, and come back stronger.", "tier": "pro"});
+            insights.add({"icon": "💪", "title": "Bounce Back Ability", "body": "After an early exit, you responded by reaching the ${_bestDisciplineResult(tournamentsWithResults[i])} or better in your next tournament. Strong players learn, adapt, and come back stronger.", "tier": "pro"});
             break;
           }
         }
@@ -887,7 +920,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       // Breaking Through
       if (tournamentsWithResults.length >= 4) {
         final last4 = tournamentsWithResults.sublist(tournamentsWithResults.length - 4);
-        final stuckAtQF = last4.every((t) => t.result == 'Quarter Final');
+        final stuckAtQF = last4.every((t) => _bestDisciplineResult(t) == 'Quarter Final');
         if (stuckAtQF) {
           insights.add({"icon": "🚀", "title": "Breaking Through", "body": "You have exited at the Quarter Final stage in your last 4 tournaments. The Semi Final is the next milestone to target in your progression. Focus on what changes in those deciding matches.", "tier": "pro"});
         }
@@ -896,7 +929,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       // Consistent Contender
       if (tournamentsWithResults.length >= 7) {
         final last7 = tournamentsWithResults.sublist(tournamentsWithResults.length - 7);
-        final qfOrBetter = last7.where((t) => (resultRanking[t.result] ?? 99) <= 6).length;
+        final qfOrBetter = last7.where((t) => (resultRanking[_bestDisciplineResult(t)] ?? 99) <= 6).length;
         if (qfOrBetter >= 6) {
           insights.add({"icon": "⭐", "title": "Consistent Contender", "body": "You have reached at least the Quarter Final in $qfOrBetter of your last 7 tournaments. You are becoming a consistently competitive tournament player.", "tier": "pro"});
         }

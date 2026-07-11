@@ -7,6 +7,7 @@ import '/index.dart';
 import '/services/premium_service.dart';
 import '/services/club_service.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'home_page_model.dart';
 export 'home_page_model.dart';
@@ -430,7 +431,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                           final userRecord = currentUserDocument;
                           final accountType = userRecord?.accountType ?? '';
                           final clubRole = userRecord?.clubRole ?? '';
-                          final isCoach = accountType == 'coach';
+                          final isCoach = accountType == 'coach' || accountType == 'headcoach' || accountType == 'headCoach';
                           final hasClub = club != null;
 
                           if (!loggedIn) return const SizedBox.shrink();
@@ -444,7 +445,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                                   } else if (isCoach && !hasClub) {
                                     context.pushNamed(CreateClubPage.routeName);
                                   } else if (!isCoach && hasClub) {
-                                    context.pushNamed(JoinClubPage.routeName);
+                                    context.pushNamed(MyClubPage.routeName);
                                   } else {
                                     context.pushNamed(JoinClubPage.routeName);
                                   }
@@ -898,6 +899,59 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                           ),
                         ),
                       ],
+                      const SizedBox(height: 32),
+
+                      // ── Achievement Share Prompt ──
+                      if (totalMatches >= 10 || (totalMatches >= 5 && winRate >= 60)) ...[
+                        Builder(builder: (context) {
+                          String shareTitle;
+                          String shareSubtitle;
+                          if (winRate >= 60 && totalMatches >= 5) {
+                            shareTitle = "You are on a great run. 🔥";
+                            shareSubtitle = "Know someone who plays badminton? Invite them to track their game too.";
+                          } else {
+                            shareTitle = "You have logged $totalMatches matches. 🏸";
+                            shareSubtitle = "Know someone who plays badminton? Invite them to track their game too.";
+                          }
+                          final shareMessage = "🏸 I've played $totalMatches matches and my win rate is $winRate% using MatchPoint Coach. Track your badminton, analyse your performance and get AI coaching insights. Give it a try!\n\niOS: https://apple.co/4eEXhJo\nAndroid: https://bit.ly/49KmCOy";
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: primary.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: primary.withOpacity(0.15)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(shareTitle, style: GoogleFonts.interTight(fontWeight: FontWeight.bold, fontSize: 14, color: primary)),
+                                      const SizedBox(height: 4),
+                                      Text(shareSubtitle, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                ElevatedButton(
+                                  onPressed: () => Share.share(shareMessage),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    elevation: 0,
+                                  ),
+                                  child: const Text('Invite', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 16),
+                      ],
+
                       const SizedBox(height: 32),
                     ],
                   ),

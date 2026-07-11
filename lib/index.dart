@@ -13,3 +13,5 @@ export '/pages/auth/forgot_password_page.dart' show ForgotPasswordPage;
 export '/pages/club/create_club_page.dart' show CreateClubPage;
 export '/pages/coach_dashboard/coach_dashboard_page.dart' show CoachDashboardPage;
 export '/pages/club/join_club_page.dart' show JoinClubPage;
+export '/pages/club/my_club_page.dart' show MyClubPage;
+export '/pages/club/club_messages_page.dart' show ClubMessagesPage;

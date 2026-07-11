@@ -5,7 +5,9 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/services/club_service.dart';
 import '/auth/firebase_auth/auth_util.dart';
+import 'dart:async';
 import '/backend/schema/users_record.dart';
+import '/index.dart';
 
 class CoachDashboardPage extends StatefulWidget {
   const CoachDashboardPage({super.key});
@@ -26,13 +28,34 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
   List<Map<String, dynamic>> _filteredPlayers = [];
   bool _loading = true;
   bool _dashboardLoaded = false;
+  StreamSubscription? _streamSub;
   String _filterTab = 'All';
   String _searchQuery = '';
 
   final List<String> _tabs = ['All', 'Under 15', 'Senior', 'Alerts'];
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_dashboardLoaded) return;
+    final existingClubId = currentUserDocument?.clubId ?? '';
+    if (existingClubId.isNotEmpty) {
+      _dashboardLoaded = true;
+      _loadDashboard(existingClubId);
+    } else {
+      _streamSub ??= authenticatedUserStream.listen((userRecord) {
+        final clubId = userRecord?.clubId ?? '';
+        if (clubId.isNotEmpty && !_dashboardLoaded) {
+          _dashboardLoaded = true;
+          _loadDashboard(clubId);
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    _streamSub?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -44,13 +67,16 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
       final clubDoc = await _db.collection('clubs').doc(clubId).get();
       if (!clubDoc.exists) { if (mounted) setState(() { _loading = false; }); return; }
       final club = {'clubId': clubDoc.id, ...clubDoc.data()!};
+      debugPrint('CoachDashboard: clubId=${club['clubId']}');
       final players = await _clubService.getClubPlayers(club['clubId']);
+      debugPrint('CoachDashboard: players found=${players.length}');
       final enriched = await Future.wait(players.map((p) => _enrichPlayer(p)));
       enriched.sort((a, b) {
         final aWatch = a['watchListed'] == true ? 0 : 1;
         final bWatch = b['watchListed'] == true ? 0 : 1;
         return aWatch.compareTo(bWatch);
       });
+      debugPrint('CoachDashboard: enriched player count=${enriched.length}');
       if (mounted) setState(() { _club = club; _players = enriched; _loading = false; _applyFilters(); });
     } catch (e) {
       debugPrint('CoachDashboard error: $e');
@@ -171,31 +197,40 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
         title: Text(_club?['clubName'] ?? 'Coach Dashboard',
             style: GoogleFonts.interTight(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.campaign_outlined, color: Colors.white),
+            tooltip: 'Club Messages',
+            onPressed: () {
+              final clubId = _club?['clubId'] ?? '';
+              if (clubId.isNotEmpty) {
+                context.pushNamed(
+                  ClubMessagesPage.routeName,
+                  queryParameters: {'clubId': clubId},
+                );
+              }
+            },
+          ),
+        ],
       ),
-      body: StreamBuilder<UsersRecord?>(
-        stream: authenticatedUserStream,
-        builder: (context, snapshot) {
-          final userRecord = snapshot.data;
-          final clubId = userRecord?.clubId ?? '';
-          if (clubId.isNotEmpty && !_dashboardLoaded) {
-            _dashboardLoaded = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) => _loadDashboard(clubId));
-          }
-          if (_loading) return const Center(child: CircularProgressIndicator());
-          if (_club == null) return Center(child: Text('No players yet. Share your club code to get started.', style: TextStyle(color: Colors.grey.shade500), textAlign: TextAlign.center));
-          return RefreshIndicator(
-            onRefresh: () => _loadDashboard(_club!['clubId']),
-            child: Column(
-              children: [
-                _buildSummaryBar(primary),
-                _buildSearchBar(),
-                _buildFilterTabs(primary),
-                Expanded(child: _buildPlayerList(primary)),
-              ],
-            ),
-          );
-        },
-      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _club == null
+              ? Center(child: Text('No players yet. Share your club code to get started.', style: TextStyle(color: Colors.grey.shade500), textAlign: TextAlign.center))
+              : _buildDashboardBody(primary),
+    );
+  }
+
+  Widget _buildDashboardBody(Color primary) {
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSummaryBar(primary),
+        _buildSearchBar(),
+        _buildFilterTabs(primary),
+        Expanded(child: _buildPlayerList(primary)),
+      ],
     );
   }
 
@@ -213,25 +248,25 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
           const SizedBox(width: 8),
           _summaryChip('$atRisk', 'At risk', Colors.orange.withOpacity(0.3), const Color(0xFFFDE68A)),
           const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () { setState(() { _filterTab = 'Alerts'; _applyFilters(); }); },
-            child: _summaryChip('$_needAttentionCount', 'Need attention', Colors.red.withOpacity(0.3), const Color(0xFFFCA5A5)),
-          ),
+          _summaryChip('$_needAttentionCount', 'Need attention', Colors.red.withOpacity(0.3), const Color(0xFFFCA5A5), onTap: () { setState(() { _filterTab = 'Alerts'; _applyFilters(); }); }),
         ],
       ),
     );
   }
 
-  Widget _summaryChip(String count, String label, Color bg, Color textColor) {
+  Widget _summaryChip(String count, String label, Color bg, Color textColor, {VoidCallback? onTap}) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
-        child: Column(
-          children: [
-            Text(count, style: GoogleFonts.interTight(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
-            Text(label, style: TextStyle(fontSize: 10, color: textColor.withOpacity(0.85)), textAlign: TextAlign.center),
-          ],
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+          child: Column(
+            children: [
+              Text(count, style: GoogleFonts.interTight(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
+              Text(label, style: TextStyle(fontSize: 10, color: textColor.withOpacity(0.85)), textAlign: TextAlign.center),
+            ],
+          ),
         ),
       ),
     );
@@ -258,6 +293,7 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
   }
 
   Widget _buildFilterTabs(Color primary) {
+    if (_players.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Row(
@@ -323,13 +359,14 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
   }
 
   Widget _buildPlayerCard(Map<String, dynamic> player, Color primary) {
+    try {
     final name = (player['display_name'] ?? player['displayName'] ?? 'Unknown').toString();
     final ageGroup = (player['ageGroup'] ?? '').toString();
-    final totalMatches = player['totalMatches'] as int;
-    final winRate = player['winRate'] as int;
-    final last5 = player['last5'] as List<bool>;
-    final trafficLight = player['trafficLight'] as String;
-    final daysSinceLast = player['daysSinceLast'] as int;
+    final totalMatches = (player['totalMatches'] as num?)?.toInt() ?? 0;
+    final winRate = (player['winRate'] as num?)?.toInt() ?? 0;
+    final last5 = ((player['last5'] as List<dynamic>?) ?? []).map((e) => e == true).toList();
+    final trafficLight = (player['trafficLight'] as String?) ?? 'red';
+    final daysSinceLast = (player['daysSinceLast'] as num?)?.toInt() ?? 999;
     final isWatched = player['watchListed'] == true;
 
     return Container(
@@ -418,5 +455,13 @@ class _CoachDashboardPageState extends State<CoachDashboardPage> {
         ),
       ),
     );
+    } catch (e) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        color: Colors.red.shade100,
+        child: Text('Card error: $e', style: const TextStyle(fontSize: 11)),
+      );
+    }
   }
 }

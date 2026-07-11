@@ -165,6 +165,18 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => const JoinClubPage(),
         ),
         FFRoute(
+          name: MyClubPage.routeName,
+          path: MyClubPage.routePath,
+          builder: (context, params) => const MyClubPage(),
+        ),
+        FFRoute(
+          name: ClubMessagesPage.routeName,
+          path: ClubMessagesPage.routePath,
+          builder: (context, params) => ClubMessagesPage(
+            clubId: params.getParam<String>('clubId', ParamType.String) ?? '',
+          ),
+        ),
+        FFRoute(
           name: CoachDashboardPage.routeName,
           path: CoachDashboardPage.routePath,
           builder: (context, params) => const CoachDashboardPage(),
