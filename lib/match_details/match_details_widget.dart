@@ -460,6 +460,14 @@ class _MatchDetailsWidgetState extends State<MatchDetailsWidget> {
                                           fontSize: match.opponentPartnerName.isNotEmpty ? 13 : 16),
                                       textAlign: TextAlign.right,
                                       overflow: TextOverflow.ellipsis)),
+                              if (match.hasOpponentHandedness() && match.opponentHandedness.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                      '${match.opponentHandedness}-handed',
+                                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                                      textAlign: TextAlign.right),
+                                ),
                             ],
                           ),
                           const SizedBox(height: 8),

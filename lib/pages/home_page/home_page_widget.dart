@@ -435,6 +435,7 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                           final hasClub = club != null;
 
                           if (!loggedIn) return const SizedBox.shrink();
+                          if (!isCoach) return const SizedBox.shrink();
 
                           return Column(
                             children: [
@@ -624,7 +625,28 @@ class _HomePageWidgetState extends State<HomePageWidget> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Expanded(child: SizedBox()),
+                          (currentUserDocument?.accountType == 'coach' || currentUserDocument?.accountType == 'headcoach' || currentUserDocument?.accountType == 'headCoach')
+                              ? const Expanded(child: SizedBox())
+                              : Expanded(
+                                  child: _navCard(
+                                    context,
+                                    icon: Icons.shield_outlined,
+                                    label: 'My Club',
+                                    subtitle: 'Your club',
+                                    color: Colors.teal.shade50,
+                                    textColor: Colors.teal.shade800,
+                                    iconColor: Colors.teal.shade700,
+                                    border: Border.all(color: Colors.teal.shade200),
+                                    onTap: () async {
+                                      if (currentUser == null) {
+                                        GoRouter.of(context).prepareAuthEvent();
+                                        final user = await authManager.signInAnonymously(context);
+                                        if (user == null) return;
+                                      }
+                                      context.pushNamed(MyClubPage.routeName);
+                                    },
+                                  ),
+                                ),
                         ],
                       ),
 
