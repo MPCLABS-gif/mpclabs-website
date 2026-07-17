@@ -70,10 +70,28 @@ class _MyClubPageState extends State<MyClubPage> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _club == null
-                ? Center(
-                    child: Text('No club found.',
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 15)),
-                  )
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.shield_outlined, color: Colors.grey.shade400, size: 40),
+                          const SizedBox(height: 16),
+                          Text('No club found.',
+                              style: TextStyle(color: Colors.grey.shade500, fontSize: 15)),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () => context.pushNamed(JoinClubPage.routeName),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: const Text('Join a Club'),
+                          ),
+                        ],
+                      ),
+                    )
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
                     child: Column(
