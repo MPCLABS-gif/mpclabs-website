@@ -503,15 +503,18 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         final rivalWins = completed.where((m) => m.opponentName == rival.key && _matchWinner(m) == "player").length;
         final rivalRate = rivalWins / rival.value;
         final rivalPct = (rivalRate * 100).round();
-        String rivalBody;
+        String rivalBody; String rivalTitle;
         if (rivalRate >= 0.7) {
+          rivalTitle = "Dominant Matchup";
           rivalBody = "You have played ${rival.key} ${rival.value} times and won $rivalPct% of those matches. You have a strong record in this matchup. Keep the consistency.";
         } else if (rivalRate >= 0.4) {
+          rivalTitle = "Close Rivalry";
           rivalBody = "${rival.key} is your most frequent opponent. You have played ${rival.value} matches and won $rivalPct%. It is a close rivalry. Small adjustments could give you the edge.";
         } else {
+          rivalTitle = "Toughest Opponent";
           rivalBody = "${rival.key} has had the better results so far. Your record in this matchup is $rivalPct%. Every match gives you more information for next time.";
         }
-        insights.add({"icon": "🆚", "title": "Toughest Opponent", "body": rivalBody, "tier": "pro"});
+        insights.add({"icon": "🆚", "title": rivalTitle, "body": rivalBody, "tier": "pro"});
       }
     }
 
