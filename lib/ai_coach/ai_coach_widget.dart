@@ -303,18 +303,18 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       final tPct = ((tCount / completed.length) * 100).round();
       final pPct = ((pCount / completed.length) * 100).round();
       String balanceBody;
-      if (tCount == completed.length) {
-        balanceBody = "All your recorded matches are tournaments. Adding practice sessions will help you refine your game between competitions.";
+      if (completed.length < 5) {
+        balanceBody = "You have not logged many matches yet. Keep tracking to build a clearer picture of where most of your matches are taking place.";
+      } else if (tCount == completed.length) {
+        balanceBody = "All of your recorded matches have been tournament matches. Logging practice matches as well, where relevant, would give you a broader view of your performances across different settings.";
       } else if (pCount == completed.length) {
-        balanceBody = "All your recorded matches are practice. Competition is where your game gets tested. Consider entering a tournament to challenge yourself.";
+        balanceBody = "All of your recorded matches have been practice matches. Tournament results, when available, would help you compare how your game translates into competition.";
       } else if (tPct >= 70) {
-        balanceBody = "Your matches are $tPct% tournaments and $pPct% practice. You are getting strong competitive exposure. Make sure you balance it with practice to keep improving your game.";
+        balanceBody = "$tPct% of your recorded matches have been tournaments. Your current match history is weighted towards competitive play.";
       } else if (pPct >= 70) {
-        balanceBody = "Your matches are $pPct% practice and $tPct% tournaments. You are building a solid base. Start testing your game more in competition.";
-      } else if (completed.length < 5) {
-        balanceBody = "You have not logged many matches yet. Keep tracking to get a clearer view of your playing patterns.";
+        balanceBody = "$pPct% of your recorded matches have been practice matches. Your current match history is weighted towards practice play.";
       } else {
-        balanceBody = "Your matches are well balanced between practice and tournaments. You are developing your game and testing it. Keep this balance going.";
+        balanceBody = "Your recorded matches include both practice and tournament play: $pPct% practice and $tPct% tournament. This gives you performance data from both settings.";
       }
       insights.add({
         "icon": "⚖️",
