@@ -275,7 +275,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       final recent15 = completed.where((m) => m.matchDate != null && now.difference(m.matchDate!).inDays <= 15).length;
       String freqBody;
       if (last30 >= 6) {
-        freqBody = "You have played $last30 matches in the last 30 days. You are playing regularly. This level of consistency supports steady improvement. Make sure you are recovering well between matches.";
+        freqBody = "You have played $last30 matches in the last 30 days. You have been competing regularly and building a useful record of your recent performances.";
       } else if (last30 >= 4) {
         freqBody = "You have played $last30 matches in the last 30 days. Good consistency. Regular play like this helps you build and maintain your level.";
       } else if (last30 >= 2) {
@@ -286,8 +286,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         freqBody = "No matches recorded in the last 30 days. Getting back on court is the most important step to improving your game.";
       }
       String trendAdd = "";
-      if (recent15 > prev15 && prev15 > 0) trendAdd = " You have been more active recently. Keep this rhythm going.";
-      else if (prev15 > recent15 && recent15 < prev15) trendAdd = " Your recent activity has dropped. Getting back into a routine will help.";
+      if (recent15 > prev15 && prev15 > 0) trendAdd = " You have played more matches in the most recent 15 days than in the previous 15.";
+      else if (prev15 > recent15) trendAdd = " You have played fewer matches in the most recent 15 days than in the previous 15.";
       insights.add({
         "icon": "📅",
         "title": "Match Frequency",
