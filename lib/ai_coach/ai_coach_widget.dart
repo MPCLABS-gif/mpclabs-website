@@ -172,13 +172,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       final remainingLabel = remaining == 1 ? "1 more match" : "$remaining more matches";
       insights.add({"icon": "🏸", "title": "Getting Started", "body": "We are learning your game. Play $remainingLabel to unlock your first coaching report.", "progress": completed.length, "tier": "free"});
     } else if (winRate >= 0.7) {
-      insights.add({"icon": "🔥", "title": "Strong Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. Your consistency is producing strong results. Keep challenging yourself and looking for ways to keep improving.", "tier": "free"});
+      insights.add({"icon": "🔥", "title": "Strong Results", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. That's a strong return so far — keep logging matches to build an even clearer picture of your game.", "tier": "free"});
     } else if (winRate >= 0.5) {
-      insights.add({"icon": "📈", "title": "Positive Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. You win more than you lose. But the margins are tight. The next step is improving how you close out matches when you are in a winning position.", "tier": "free"});
-    } else if (winRate > 0.2) {
-      insights.add({"icon": "💪", "title": "Developing Win Rate", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. You are still building your results and gaining valuable match experience. Every match adds to your picture.", "tier": "free"});
+      insights.add({"icon": "📈", "title": "Positive Results", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches — more wins than losses. A solid foundation, and there's more to learn as you keep playing and tracking.", "tier": "free"});
+    } else if (winRate >= 0.3) {
+      insights.add({"icon": "💪", "title": "Developing Results", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. You're building experience and results with every match you log.", "tier": "free"});
     } else {
-      insights.add({"icon": "🌱", "title": "Building Your Profile", "body": "We have analysed ${completed.length} matches so far. Keep tracking your results to unlock more accurate coaching insights and personalised recommendations.", "tier": "free"});
+      insights.add({"icon": "🌱", "title": "Building Results", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. Every match you log adds to the picture — keep playing and tracking to unlock more insights.", "tier": "free"});
     }
 
     final moodStats = <String, Map<String, int>>{};
