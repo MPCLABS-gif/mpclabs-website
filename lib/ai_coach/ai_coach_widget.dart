@@ -210,16 +210,9 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
     }
 
-    // ── On Fire / Reset Mode (free) ──
+    // ── Recent Results (free) ──
     {
-      int winStreak = 0;
-      int loseStreak = 0;
-      for (final m in completed) {
-        if (_matchWinner(m) == "player") { winStreak++; loseStreak = 0; }
-        else { loseStreak++; winStreak = 0; }
-      }
-      // completed is ordered descending so first entry = most recent
-      // recalculate streaks from most recent
+      // recalculate streaks from most recent (completed is ordered descending)
       int wStreak = 0;
       int lStreak = 0;
       for (final m in completed) {
@@ -235,17 +228,19 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         }
       }
       if (wStreak >= 5) {
-        insights.add({"icon": "🔥", "title": "On Fire!", "body": "$wStreak wins in a row. You are in top form right now. This is a great time to push yourself against stronger opponents.", "tier": "free"});
+        insights.add({"icon": "🔥", "title": "Winning Run", "body": "You have won $wStreak matches in a row. Take confidence from those results, while continuing to focus on the preparation and routines that support your performance. Approach the next match one rally at a time.", "tier": "free"});
       } else if (wStreak >= 3) {
-        insights.add({"icon": "🔥", "title": "On Fire!", "body": "$wStreak match winning streak. Your game is in a good place. Keep the momentum going.", "tier": "free"});
+        insights.add({"icon": "🔥", "title": "Winning Run", "body": "You have won $wStreak matches in a row. Your recent results have been positive. Keep focusing on the habits and decisions that have supported those performances.", "tier": "free"});
       } else if (wStreak == 2) {
-        insights.add({"icon": "📈", "title": "Early Momentum", "body": "You have won two matches in a row. Momentum is starting to build. Keep it going.", "tier": "free"});
+        insights.add({"icon": "📈", "title": "Back-to-Back Wins", "body": "You have won your last two matches. Take the positives from both performances and focus on what you want to repeat in your next match.", "tier": "free"});
       } else if (lStreak >= 3) {
-        insights.add({"icon": "🔄", "title": "Losing Streak", "body": "$lStreak matches have not gone your way. Small adjustments and continued effort can help turn things around.", "tier": "free"});
-      } else if (lStreak >= 1) {
-        insights.add({"icon": "🔄", "title": "Bounce Back Time", "body": "Your last match was a loss. One result does not define your form. Focus on your next match.", "tier": "free"});
+        insights.add({"icon": "🔄", "title": "Reset Mode", "body": "Your last $lStreak results have not gone your way. This run does not define your ability. Focus on one controllable area you can improve and approach the next match as a fresh opportunity.", "tier": "free"});
+      } else if (lStreak == 2) {
+        insights.add({"icon": "🔄", "title": "Reset and Refocus", "body": "Your last two results have not gone your way. Look for one useful lesson, reset, and choose one clear focus for your next match.", "tier": "free"});
+      } else if (lStreak == 1) {
+        insights.add({"icon": "🔄", "title": "Next Match Focus", "body": "Your last match did not go your way. Take the lesson from it, then shift your attention to what you can control in your next performance.", "tier": "free"});
       } else if (wStreak == 1) {
-        insights.add({"icon": "✅", "title": "Winning Momentum", "body": "You won your last match. A good result. Build on this in your next game.", "tier": "free"});
+        insights.add({"icon": "✅", "title": "Recent Win", "body": "You won your last match. Reflect on what worked well and choose one positive behaviour to carry into your next performance.", "tier": "free"});
       }
     }
 
