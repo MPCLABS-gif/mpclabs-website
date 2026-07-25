@@ -244,27 +244,24 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
     }
 
-    // ── Danger Mood Warning (pro) ──
+    // ── Performance Across Moods (pro) ──
     if (moodStats.isNotEmpty) {
-      String? worstMoodPro; double worstRatePro = 1;
-      moodStats.forEach((mood, stats) {
-        if (stats["total"]! >= 3) {
-          final rate = stats["wins"]! / stats["total"]!;
-          if (rate < worstRatePro) { worstRatePro = rate; worstMoodPro = mood; }
-        }
-      });
-      final bestMoodForCheck = moodStats.entries.where((e) => e.value["total"]! >= 2).fold<String?>(null, (prev, e) { final r = e.value["wins"]! / e.value["total"]!; return (prev == null || r > (moodStats[prev]!["wins"]! / moodStats[prev]!["total"]!)) ? e.key : prev; });
-      if (worstMoodPro != null && worstMoodPro != bestMoodForCheck && worstRatePro < winRate) {
-        final pct = (worstRatePro * 100).round();
-        String dangerBody;
-        if (worstRatePro < 0.2) {
-          dangerBody = "When you feel $worstMoodPro, your win rate drops to $pct%. This mood appears to be making matches more challenging. Being aware of it is the first step to managing it.";
-        } else if (worstRatePro < 0.4) {
-          dangerBody = "Your win rate is $pct% when feeling $worstMoodPro. This is a pattern worth noting. Finding ways to manage this mindset before matches could help your performance.";
+      final qualifyingMoods = moodStats.entries.where((e) => e.value["total"]! >= 5).toList();
+      if (qualifyingMoods.length >= 2) {
+        final rates = qualifyingMoods.map((e) => e.value["wins"]! / e.value["total"]!).toList();
+        final maxRate = rates.reduce((a, b) => a > b ? a : b);
+        final minRate = rates.reduce((a, b) => a < b ? a : b);
+        final spread = maxRate - minRate;
+        final spreadPct = (spread * 100).round();
+        // Placeholder threshold — revisit once we have enough real user data to calibrate a meaningful spread.
+        const stabilityThreshold = 0.15;
+        String moodConsistencyBody;
+        if (spread <= stabilityThreshold) {
+          moodConsistencyBody = "Your recent results have been similar across different pre-match moods (a $spreadPct% spread between your strongest and weakest recorded moods, based on ${qualifyingMoods.length} moods with enough matches to compare). This suggests your performances may be becoming less dependent on how you feel before competing.";
         } else {
-          dangerBody = "You win $pct% when feeling $worstMoodPro, which is lower than your usual level. Being aware of this pattern is a useful first step.";
+          moodConsistencyBody = "Your current results vary across different pre-match moods (a $spreadPct% spread between your strongest and weakest recorded moods, based on ${qualifyingMoods.length} moods with enough matches to compare). As you log more matches, we'll help you identify the preparation habits that support your most consistent performances.";
         }
-        insights.add({"icon": "⚠️", "title": "Performance Mood Alert", "body": dangerBody, "tier": "pro"});
+        insights.add({"icon": "🧭", "title": "Performance Across Moods", "body": moodConsistencyBody, "tier": "pro"});
       }
     }
 
