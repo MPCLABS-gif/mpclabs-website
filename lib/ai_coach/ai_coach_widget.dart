@@ -402,7 +402,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         consBody = "Your results show some variation between matches. Working on your pre-match routine and preparation could help you perform at your best more often.";
       } else {
         consTitle = "Inconsistent Results";
-        consBody = "Your results vary significantly between matches. Your results vary significantly between matches. Building a consistent routine and preparation could help unlock better results.";
+        consBody = "Your results vary significantly between matches. Building a consistent routine and preparation could help unlock better results.";
       }
       // Add-on: compare recent 5 vs earlier 5 consistency
       String consAddOn = "";
@@ -857,7 +857,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       final goldResults = tournamentsWithResults.where((t) => _bestDisciplineResult(t) == 'Gold').toList();
       if (goldResults.isNotEmpty) {
         final goldName = goldResults.last.name;
-        insights.add({"icon": "🥇", "title": "Champion's Challenge", "body": "You won Gold at $goldName. That is a significant achievement. The challenge now is to maintain that level and defend your title at the next opportunity.", "tier": "pro"});
+        insights.add({"icon": "🥇", "title": "Champion's Challenge", "body": "You won Gold at $goldName. The challenge now is repeating that performance under different opponents and conditions. Use it as the benchmark you are chasing in every tournament ahead.", "tier": "pro"});
       }
 
       // Finals Record
