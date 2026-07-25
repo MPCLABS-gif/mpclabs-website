@@ -349,25 +349,15 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (closeGamesTotal >= 5) {
         final closeRate = closeGamesWon / closeGamesTotal;
         final closePct = (closeRate * 100).round();
-        String closeBody; String closeTitle;
-        if (closeRate >= 0.6) {
-          closeTitle = "Close Game Specialist";
-          closeBody = "In close games decided by 3 points or fewer, you win $closePct% of them. You handle tight situations well. This is a strong competitive edge.";
-        } else if (closeRate >= 0.4) {
-          closeTitle = "Competitive in Close Games";
-          closeBody = "In close games decided by 3 points or fewer, you win $closePct% of them. You are competitive in tight moments. Small improvements in key points could push this higher.";
-        } else {
-          closeTitle = "Close Games Need Work";
-          closeBody = "In close games decided by 3 points or fewer, you win $closePct% of them. Tight moments are a good opportunity for growth. Improving focus on key points could make a real difference.";
-        }
         final addOn = totalGamesPlayed > 0 && (closeGamesTotal / totalGamesPlayed) >= 0.4
-            ? " A large portion of your games are decided by small margins. Improving performance in these moments could significantly impact your results."
+            ? " These games make up a meaningful share of your results, so they are worth reviewing when preparing for tight matches."
             : "";
-        insights.add({"icon": "⚔️", "title": closeTitle, "body": closeBody + addOn, "tier": "pro"});
+        final closeBody = "You have won $closePct% of your close games (games decided by 3 points or fewer), based on $closeGamesTotal such games." + addOn;
+        insights.add({"icon": "⚔️", "title": "Close Game Performance", "body": closeBody, "tier": "pro"});
       }
     }
 
-    // ── Consistency Score (pro) ──
+    // ── Match-to-Match Consistency (pro) ──
     if (completed.length >= 8) {
       final sample = completed.take(10).toList();
       int switches = 0;
@@ -377,16 +367,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         if (curr != next) switches++;
       }
       final ratio = switches / (sample.length - 1);
-      String consBody; String consTitle;
-      if (ratio <= 0.3) {
-        consTitle = "Performance Stability";
-        consBody = "Your performances are generally consistent from match to match. Consistency is a strong foundation for long-term improvement.";
-      } else if (ratio <= 0.55) {
-        consTitle = "Performance Stability";
-        consBody = "Your results show some variation between matches. Working on your pre-match routine and preparation could help you perform at your best more often.";
-      } else {
-        consTitle = "Inconsistent Results";
-        consBody = "Your results vary significantly between matches. Building a consistent routine and preparation could help unlock better results.";
+      final timeWord = switches == 1 ? "time" : "times";
+      String consBody = "Across your last ${sample.length} matches, your results switched between a win and a loss $switches $timeWord.";
+      if (ratio > 0.55) {
+        consBody += " Results can vary for many reasons, including opponent level, match setting and preparation. Every match you log adds another piece to the picture, helping you understand your game with greater confidence.";
       }
       // Add-on: compare recent 5 vs earlier 5 consistency
       String consAddOn = "";
@@ -399,83 +383,49 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           if (_matchWinner(recent5[i]) != _matchWinner(recent5[i+1])) recentSwitches++;
           if (_matchWinner(earlier5[i]) != _matchWinner(earlier5[i+1])) earlierSwitches++;
         }
-        if (recentSwitches < earlierSwitches) consAddOn = " Your recent matches are becoming more consistent. Keep building on this.";
+        if (recentSwitches < earlierSwitches) consAddOn = " Your most recent matches have shown fewer swings than your earlier ones.";
       }
-      insights.add({"icon": "📊", "title": consTitle, "body": consBody + consAddOn, "tier": "pro"});
+      insights.add({"icon": "📊", "title": "Match-to-Match Consistency", "body": consBody + consAddOn, "tier": "pro"});
     }
 
-    // ── Tournament Performance (pro) ──
-
-    if (tMatches.length >= 3 && pMatches.length >= 3) {
+    // ── Tournament vs Practice Results (pro) ──
+    if (tMatches.length >= 5 && pMatches.length >= 5) {
       final tRate = tMatches.where((m) => _matchWinner(m) == "player").length / tMatches.length;
       final pRate = pMatches.where((m) => _matchWinner(m) == "player").length / pMatches.length;
       final tPct = (tRate * 100).round();
       final pPct = (pRate * 100).round();
-      final diff = tRate - pRate;
-      String tournBody;
-      String tournTitle;
-      String tournIcon;
+      final diff = (tRate - pRate).abs();
+      String tournBody = "You have won $tPct% of your tournament matches and $pPct% of your practice matches.";
       if (diff >= 0.2) {
-        tournTitle = "Tournament Advantage"; tournIcon = "🏆";
-        tournBody = "You win $tPct% of your tournament matches compared to $pPct% in practice. You perform strongly in competition. Keep building on this edge.";
-      } else if (diff >= 0.1) {
-        tournTitle = "Slight Tournament Edge"; tournIcon = "🏆";
-        tournBody = "Your tournament win rate is $tPct% compared to $pPct% in practice. Competition brings out a little extra in your game. Keep building on it.";
-      } else if (diff <= -0.2) {
-        tournTitle = "Tournament Pressure"; tournIcon = "⚡";
-        tournBody = "Your win rate drops from $pPct% in practice to $tPct% in tournaments. Tournament matches seem more challenging right now. Building your preparation and pre-match routine could help close the gap.";
-      } else if (diff <= -0.1) {
-        tournTitle = "Slight Tournament Pressure"; tournIcon = "⚡";
-        tournBody = "You win $tPct% in tournaments compared to $pPct% in practice. There is a small gap. Focusing on consistency could help close it.";
-      } else {
-        tournTitle = ""; tournIcon = ""; tournBody = "";
+        tournBody += " That's an interesting pattern. As you log more matches, you'll start to see whether it becomes a consistent part of your game.";
       }
-      if (tournBody.isNotEmpty) insights.add({"icon": tournIcon, "title": tournTitle, "body": tournBody, "tier": "pro"});
+      insights.add({"icon": "🏆", "title": "Tournament vs Practice Results", "body": tournBody, "tier": "pro"});
     }
 
-    // ── Comeback Performance (pro) ──
+    // ── Results After Losing Game 1 (pro) ──
     final lostG1 = completed.where((m) => m.g1Player < m.g1Opponent).toList();
-    if (lostG1.length >= 3) {
+    if (lostG1.length >= 5) {
       final comebacks = lostG1.where((m) => _matchWinner(m) == "player").length;
       final rate = comebacks / lostG1.length;
       final pct = (rate * 100).round();
-      String comebackBody; String comebackTitle; String comebackIcon;
-      if (rate >= 0.7) {
-        comebackTitle = "Comeback King"; comebackIcon = "🔄";
-        comebackBody = "You win $pct% of matches after losing Game 1. You handle pressure well and find ways to turn matches around. A strong competitive edge.";
-      } else if (rate >= 0.5) {
-        comebackTitle = "Strong Comeback"; comebackIcon = "💪";
-        comebackBody = "You recover to win $pct% of matches after losing Game 1. Your resilience is a strength. Keep trusting your game when you fall behind.";
-      } else if (rate >= 0.2) {
-        comebackTitle = "Developing Comebacks"; comebackIcon = "🎯";
-        comebackBody = "When you lose Game 1, you recover $pct% of the time. Improving your reset between games could help turn more matches around.";
-      } else {
-        comebackTitle = "Start Strong"; comebackIcon = "⚡";
-        comebackBody = "After losing Game 1, there is an opportunity to improve how you reset and respond. Your comeback rate is $pct%. Focusing on strong starts and between-game adjustments could make a difference.";
+      String comebackBody = "After losing Game 1, you have won $pct% of those matches ($comebacks of ${lostG1.length}).";
+      if (rate < 0.3) {
+        comebackBody += " Consider what helps you reset quickly and come out strong in Game 2.";
       }
-      insights.add({"icon": comebackIcon, "title": comebackTitle, "body": comebackBody, "tier": "pro"});
+      insights.add({"icon": "🔄", "title": "Results After Losing Game 1", "body": comebackBody, "tier": "pro"});
     }
 
-    // ── Closing Out Matches (pro) ──
+    // ── Results After Winning Game 1 (pro) ──
     final wonG1 = completed.where((m) => m.g1Player > m.g1Opponent).toList();
-    if (wonG1.length >= 3) {
-      final ledLost = wonG1.where((m) => _matchWinner(m) == "opponent").length;
-      final ledRate = ledLost / wonG1.length;
-      final ledPct = (ledRate * 100).round();
-      String closeBody; String closeTitle;
-      if (ledRate >= 0.5) {
-        closeTitle = "Closing Challenge";
-        closeBody = "You are losing $ledPct% of matches after winning Game 1. Closing out matches is proving difficult. Maintaining focus and intensity when ahead could make a big difference.";
-      } else if (ledRate >= 0.3) {
-        closeTitle = "Closing Needs Work";
-        closeBody = "You lose $ledPct% of matches after winning Game 1. This is a pattern worth improving. Sustaining pressure when you are ahead could help you win more matches.";
-      } else if (ledRate >= 0.15) {
-        closeTitle = "Slight Closing Issue";
-        closeBody = "You occasionally lose matches after winning Game 1. $ledPct% of the time. Small lapses when ahead can be costly.";
-      } else {
-        closeTitle = ""; closeBody = "";
+    if (wonG1.length >= 5) {
+      final wonAfterG1 = wonG1.where((m) => _matchWinner(m) == "player").length;
+      final closedRate = wonAfterG1 / wonG1.length;
+      final closedPct = (closedRate * 100).round();
+      String closeBody = "After winning Game 1, you have gone on to win $closedPct% of those matches ($wonAfterG1 of ${wonG1.length}).";
+      if (closedRate < 0.7) {
+        closeBody += " Consider what helps you stay locked in and keep your game plan once you're ahead.";
       }
-      if (closeBody.isNotEmpty) insights.add({"icon": "😤", "title": closeTitle, "body": closeBody, "tier": "pro"});
+      insights.add({"icon": "😤", "title": "Results After Winning Game 1", "body": closeBody, "tier": "pro"});
     }
 
     // ── Main Rival (pro) ──
@@ -616,59 +566,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
     }
 
-    // ── Performance Under Pressure (premium) ──
-    {
-      int pressureTotal = 0;
-      int pressureWon = 0;
-      for (final m in completed) {
-        final g3Played = m.g3Player > 0 || m.g3Opponent > 0;
-        if (!g3Played) continue;
-        final g3Diff = (m.g3Player - m.g3Opponent).abs();
-        if (g3Diff <= 3) {
-          pressureTotal++;
-          if (_matchWinner(m) == "player") pressureWon++;
-        }
-      }
-      if (pressureTotal >= 3) {
-        final pressRate = pressureWon / pressureTotal;
-        final pressPct = (pressRate * 100).round();
-        String pressBody; String pressTitle;
-        if (pressRate >= 0.6) {
-          pressTitle = "Clutch Performer";
-          pressBody = "In matches decided by tight final games, you win $pressPct% of the time. You perform well in decisive moments. A strong competitive edge.";
-        } else if (pressRate >= 0.4) {
-          pressTitle = "Competitive Under Pressure";
-          pressBody = "In matches decided by tight final games, you win $pressPct% of the time. You compete well under pressure. Small improvements in key moments could make a difference.";
-        } else {
-          pressTitle = "Pressure Needs Work";
-          pressBody = "In matches decided by tight final games, you win $pressPct% of the time. Tight matches are a great opportunity to develop your decision-making under pressure. Small improvements in key moments could help.";
-        }
-        insights.add({"icon": "🎯", "title": pressTitle, "body": pressBody, "tier": "premium"});
-      }
-    }
+    
 
-    // ── Deciding Game Performance (premium) ──
-
+    // ── Results in Deciding Games (premium) ──
     final threeSetMatches = completed.where((m) => m.g3Player > 0 || m.g3Opponent > 0).toList();
-    if (threeSetMatches.length >= 3) {
+    if (threeSetMatches.length >= 5) {
       final g3Wins = threeSetMatches.where((m) => _matchWinner(m) == "player").length;
       final g3Rate = g3Wins / threeSetMatches.length;
       final g3Pct = (g3Rate * 100).round();
-      String g3Body; String g3Title; String g3Icon;
-      if (g3Rate >= 0.7) {
-        g3Title = "Decider Specialist"; g3Icon = "💥";
-        g3Body = "You win $g3Pct% of your deciding games. When matches go the distance, you consistently find a way to come out on top. A strong competitive edge.";
-      } else if (g3Rate >= 0.5) {
-        g3Title = "Strong in Deciders"; g3Icon = "💪";
-        g3Body = "You win $g3Pct% of your deciding games. You handle pressure well. Keep building your consistency in close matches.";
-      } else if (g3Rate >= 0.3) {
-        g3Title = "Decider Needs Work"; g3Icon = "🎯";
-        g3Body = "You win $g3Pct% of your deciding games. Deciding games are a valuable opportunity for growth. Stronger focus and consistency could help.";
-      } else {
-        g3Title = "Struggling in Deciders"; g3Icon = "⚡";
-        g3Body = "You win $g3Pct% of your deciding games. When matches go to a final game, there is an opportunity to improve how you finish strongly. Focusing on fitness and between-game resets could help.";
-      }
-      insights.add({"icon": g3Icon, "title": g3Title, "body": g3Body, "tier": "premium"});
+      final g3Body = "When your matches have gone to a deciding game, you have won $g3Pct% of them, based on ${threeSetMatches.length} such matches. Deciding games are where matches are won and lost — worth keeping an eye on as you log more of them.";
+      insights.add({"icon": "💥", "title": "Results in Deciding Games", "body": g3Body, "tier": "premium"});
     }
 
     // ── Performance Trend (premium) ──
@@ -762,23 +669,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
     }
 
-    // ── Playing Style (premium) ──
-    if (completed.length >= 3) {
+    // ── First Game Results (premium) ──
+    if (completed.length >= 8) {
       final g1WonCount = completed.where((m) => m.g1Player > m.g1Opponent).length;
       final g1StyleRate = g1WonCount / completed.length;
       final g1StylePct = (g1StyleRate * 100).round();
-      String styleBody; String styleTitle;
-      if (g1StyleRate >= 0.6) {
-        styleTitle = "Aggressive Starter";
-        styleBody = "Based on your match data, you tend to start strongly. Winning $g1StylePct% of first games. You set the tone early and apply pressure from the start. Maintaining that level across the match will be key.";
-      } else if (g1StyleRate >= 0.4) {
-        styleTitle = "Balanced Player";
-        styleBody = "Based on your match data, you have a balanced start. Winning $g1StylePct% of first games. Matches are often shaped by how you perform in the middle and later stages.";
-      } else {
-        styleTitle = "Slow Builder";
-        styleBody = "Based on your match data, you tend to start slowly. Winning $g1StylePct% of first games. Falling behind early can put you under pressure, so improving your opening game could make a difference.";
-      }
-      insights.add({"icon": "🧬", "title": styleTitle, "body": styleBody, "tier": "premium"});
+      final styleBody = "You have won $g1StylePct% of your first games across ${completed.length} matches. Worth keeping an eye on as more matches build a fuller picture of how you play.";
+      insights.add({"icon": "🧬", "title": "First Game Results", "body": styleBody, "tier": "premium"});
     }
 
     // ── Game-by-Game Breakdown (premium) ──
