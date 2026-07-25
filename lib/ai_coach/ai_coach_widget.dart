@@ -188,33 +188,25 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       moodStats[m.mood]!["total"] = moodStats[m.mood]!["total"]! + 1;
       if (_matchWinner(m) == "player") moodStats[m.mood]!["wins"] = moodStats[m.mood]!["wins"]! + 1;
     }
-    // ── Peak Performance Mood (free) ──
+    // ── Mood & Performance (free) ──
     if (moodStats.isNotEmpty) {
-      String? bestMood; double bestRate = 0;
-      String? worstMoodFree; double worstRateFree = 1;
+      String? bestMood; double bestRate = 0; int bestTotal = 0; String? worstMoodFree; double worstRateFree = 1;
       moodStats.forEach((mood, stats) {
-        if (stats["total"]! >= 2) {
+        if (stats["total"]! >= 5) {
           final rate = stats["wins"]! / stats["total"]!;
-          if (rate > bestRate) { bestRate = rate; bestMood = mood; }
+          if (rate > bestRate) { bestRate = rate; bestMood = mood; bestTotal = stats["total"]!; }
           if (rate < worstRateFree) { worstRateFree = rate; worstMoodFree = mood; }
         }
       });
       if (bestMood != null) {
         final pct = (bestRate * 100).round();
-        String moodBody;
-        if (bestRate >= 0.7) {
-          moodBody = "You perform very strongly when feeling $bestMood, winning $pct% of those matches. Try to bring that mindset into every match.";
-        } else if (bestRate >= 0.4) {
-          moodBody = "You perform best when feeling $bestMood, winning $pct% of those matches. Try to recreate that mindset before your next game.";
-        } else {
-          moodBody = "You perform slightly better when feeling $bestMood, but results are still building. Focus on consistency across all matches.";
-        }
-        insights.add({"icon": "🧠", "title": "Peak Performance Mood", "body": moodBody, "tier": "free"});
-        if (worstMoodFree != null && worstMoodFree != bestMood && worstRateFree < 0.5) {
-          insights.add({"icon": "⚡", "title": "Mood to Watch", "body": "When feeling $worstMoodFree, your results tend to drop. Being aware of this can help you manage your mindset during matches.", "tier": "free"});
+        final moodBody = "Your strongest results have come in matches where you recorded feeling $bestMood, winning $pct% of your $bestTotal matches recorded in that mood. Think about what else was consistent before those matches, such as your preparation, warm-up or match routine. The goal isn't to recreate a feeling, but to build routines that help you perform at your best.";
+        insights.add({"icon": "🧠", "title": "Mood & Performance", "body": moodBody, "tier": "free"});
+        if (worstMoodFree != null && worstMoodFree != bestMood && worstRateFree < winRate) {
+          insights.add({"icon": "⚡", "title": "Mood to Watch", "body": "Your results have been less successful in matches where you recorded feeling $worstMoodFree. This is worth reflecting on—not because the mood caused the result, but because it may highlight something in your preparation, routines or mindset that you can strengthen.", "tier": "free"});
         }
       } else {
-        insights.add({"icon": "🧠", "title": "Peak Performance Mood", "body": "We need at least 5 matches recorded in the same mood before identifying your strongest mental state. Keep logging your pre-match mood to unlock this insight.", "tier": "free"});
+        insights.add({"icon": "🧠", "title": "Mood & Performance", "body": "We need at least 5 matches recorded in the same mood before we can identify a meaningful pattern. Keep logging your pre-match mood to unlock this insight.", "tier": "free"});
       }
     }
 
