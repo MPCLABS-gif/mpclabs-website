@@ -442,85 +442,53 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
     }
 
-    // ── Format Strength (pro) ──
+    // ── Singles vs Doubles Results (pro) ──
     final doubles = completed.where((m) => m.partnerName.isNotEmpty).toList();
     final singles = completed.where((m) => m.partnerName.isEmpty).toList();
-    if (doubles.length >= 3 && singles.length >= 3) {
+    if (doubles.length >= 5 && singles.length >= 5) {
       final dRate = doubles.where((m) => _matchWinner(m) == "player").length / doubles.length;
       final sRate = singles.where((m) => _matchWinner(m) == "player").length / singles.length;
       final sPct = (sRate * 100).round();
       final dPct = (dRate * 100).round();
-      final fDiff = sRate - dRate;
-      String formatBody; String formatTitle;
+      final fDiff = (sRate - dRate).abs();
+      String formatBody = "You have won $sPct% of your singles matches and $dPct% of your doubles matches.";
       if (fDiff >= 0.2) {
-        formatTitle = "Singles Specialist";
-        formatBody = "You win $sPct% of your singles matches compared to $dPct% in doubles. Singles is your stronger format. Keep building on this advantage.";
-      } else if (fDiff >= 0.1) {
-        formatTitle = "Slight Singles Edge";
-        formatBody = "Your singles win rate is $sPct% compared to $dPct% in doubles. You perform slightly better in singles. Continue developing both formats.";
-      } else if (fDiff <= -0.2) {
-        formatTitle = "Doubles Specialist";
-        formatBody = "You win $dPct% of your doubles matches compared to $sPct% in singles. Doubles is your stronger format. Keep building on this advantage.";
-      } else if (fDiff <= -0.1) {
-        formatTitle = "Slight Doubles Edge";
-        formatBody = "Your doubles win rate is $dPct% compared to $sPct% in singles. You perform slightly better in doubles. Continue building across both formats.";
-      } else {
-        formatTitle = ""; formatBody = "";
+        formatBody += " That's an interesting difference between the two formats. Keep tracking both to see whether the pattern continues.";
       }
-      if (formatBody.isNotEmpty) insights.add({"icon": "🏸", "title": formatTitle, "body": formatBody, "tier": "pro"});
+      insights.add({"icon": "🏸", "title": "Singles vs Doubles Results", "body": formatBody, "tier": "pro"});
     }
 
-    // ── Opponent Handedness (pro) ──
+    // ── Results by Opponent Handedness (pro) ──
     {
       final rightMatches = completed.where((m) => m.opponentHandedness == "Right").toList();
       final leftMatches = completed.where((m) => m.opponentHandedness == "Left").toList();
-      if (rightMatches.length >= 3 && leftMatches.length >= 3) {
+      if (rightMatches.length >= 5 && leftMatches.length >= 5) {
         final rightWins = rightMatches.where((m) => _matchWinner(m) == "player").length;
         final leftWins = leftMatches.where((m) => _matchWinner(m) == "player").length;
         final rightRate = rightWins / rightMatches.length;
         final leftRate = leftWins / leftMatches.length;
         final rightPct = (rightRate * 100).round();
         final leftPct = (leftRate * 100).round();
-        final diff = rightRate - leftRate;
-        String handBody; String handTitle; String handIcon;
+        final diff = (rightRate - leftRate).abs();
+        String handBody = "You have won $rightPct% of matches against right-handed opponents and $leftPct% against left-handed opponents.";
         if (diff >= 0.2) {
-          handTitle = "Left-Handers Are a Challenge";
-          handIcon = "🤚";
-          handBody = "You win $rightPct% against right-handed opponents but only $leftPct% against left-handers. Left-handed opponents present a different challenge. Their angles and shot patterns are different. Practising against left-handers or working on reading their play could make a real difference.";
-        } else if (diff >= 0.1) {
-          handTitle = "Slight Weakness vs Left-Handers";
-          handIcon = "🤚";
-          handBody = "Your win rate is $rightPct% against right-handers and $leftPct% against left-handers. There is a small gap. Left-handed players bring different angles. Being more aware of this could help.";
-        } else if (diff <= -0.2) {
-          handTitle = "Strong vs Left-Handers";
-          handIcon = "💪";
-          handBody = "You win $leftPct% against left-handed opponents compared to $rightPct% against right-handers. You handle left-handers well. Their angles and patterns do not seem to trouble you.";
-        } else if (diff <= -0.1) {
-          handTitle = "Slight Edge vs Left-Handers";
-          handIcon = "💪";
-          handBody = "You perform slightly better against left-handed opponents, winning $leftPct% compared to $rightPct% against right-handers. Keep building on this.";
-        } else {
-          handTitle = "Consistent vs Both Hands";
-          handIcon = "🏸";
-          handBody = "Your win rate is $rightPct% against right-handers and $leftPct% against left-handers. You perform consistently regardless of handedness. A good sign of all-round ability.";
+          handBody += " That's an interesting difference between the two groups. Keep tracking opponent handedness to see whether the pattern continues.";
         }
-        insights.add({"icon": handIcon, "title": handTitle, "body": handBody, "tier": "pro"});
-      } else if (leftMatches.length >= 3 && rightMatches.length < 3) {
+        insights.add({"icon": "🏸", "title": "Results by Opponent Handedness", "body": handBody, "tier": "pro"});
+      } else if (leftMatches.length >= 5 && rightMatches.length < 5) {
         final leftWins = leftMatches.where((m) => _matchWinner(m) == "player").length;
         final leftRate = leftWins / leftMatches.length;
         final leftPct = (leftRate * 100).round();
-        insights.add({"icon": "🤚", "title": "Left-Hander Record", "body": "You have played ${leftMatches.length} matches against left-handed opponents, winning $leftPct% of them. Keep logging opponent handedness to unlock a full comparison.", "tier": "pro"});
-      } else if (rightMatches.length >= 3 && leftMatches.length < 3) {
-        insights.add({"icon": "🏸", "title": "Handedness Data Building", "body": "You need at least 3 matches against left-handed opponents to unlock your handedness insight. Keep logging opponent handedness when adding matches.", "tier": "pro"});
+        insights.add({"icon": "🤚", "title": "Left-Handed Opponent Record", "body": "You have played ${leftMatches.length} matches against left-handed opponents, winning $leftPct% of them. Keep logging opponent handedness to build a fuller comparison.", "tier": "pro"});
+      } else if (rightMatches.length >= 5 && leftMatches.length < 5) {
+        insights.add({"icon": "🏸", "title": "Handedness Data Building", "body": "You need more matches against left-handed opponents before we can compare results by handedness. Keep logging opponent handedness when adding matches.", "tier": "pro"});
       }
     }
 
-    // ── Match Dominance Profile (premium) ──
+    // ── Winning Margins (premium) ──
     {
       int gamesWon = 0;
-      int gamesLost = 0;
       int totalWinMargin = 0;
-      int totalLossMargin = 0;
       for (final m in completed) {
         final games = [
           [m.g1Player, m.g1Opponent],
@@ -531,28 +499,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
           final p = g[0]; final o = g[1];
           if (p == 0 && o == 0) continue;
           if (p > o) { gamesWon++; totalWinMargin += (p - o); }
-          else if (o > p) { gamesLost++; totalLossMargin += (o - p); }
         }
       }
       if (gamesWon >= 5) {
         final avgWinMargin = totalWinMargin / gamesWon;
-        final avgLossMargin = gamesLost > 0 ? totalLossMargin / gamesLost : 0.0;
         final marginStr = avgWinMargin.toStringAsFixed(1);
-        String domBody; String domTitle;
-        if (avgWinMargin >= 6) {
-          domTitle = "Match Dominator";
-          domBody = "When you win games, you win them by an average of $marginStr points. Your victories are comfortable. You tend to control games.";
-        } else if (avgWinMargin >= 3) {
-          domTitle = "Controlled Winner";
-          domBody = "When you win games, you win them by an average of $marginStr points. Your wins are solid. You stay in control without always dominating.";
-        } else {
-          domTitle = "Narrow Winner";
-          domBody = "When you win games, you win them by an average of $marginStr points. Your wins are tight. Improving how you close out games could help you take more control.";
-        }
-        final addOnDom = avgLossMargin >= avgWinMargin
-            ? " You are also losing games by similar or larger margins. Reducing errors in those moments could improve your results."
-            : "";
-        insights.add({"icon": "💪", "title": domTitle, "body": domBody + addOnDom, "tier": "premium"});
+        final domBody = "When you win games, you do so by an average of $marginStr points.";
+        insights.add({"icon": "💪", "title": "Winning Margins", "body": domBody, "tier": "premium"});
       }
     }
 
@@ -568,35 +521,23 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       insights.add({"icon": "💥", "title": "Results in Deciding Games", "body": g3Body, "tier": "premium"});
     }
 
-    // ── Performance Trend (premium) ──
+    // ── Recent vs Earlier Form (premium) ──
     final sortedByDate = List<MatchesRecord>.from(completed)..sort((a, b) => a.matchDate!.compareTo(b.matchDate!));
-    if (sortedByDate.length >= 6) {
+    if (sortedByDate.length >= 10) {
       final recentMatches = sortedByDate.reversed.take(5).toList();
       final earlierMatches = sortedByDate.reversed.skip(5).take(5).toList();
-      if (earlierMatches.isNotEmpty) {
-        final recentRate = recentMatches.where((m) => _matchWinner(m) == "player").length / recentMatches.length;
-        final earlyRate = earlierMatches.where((m) => _matchWinner(m) == "player").length / earlierMatches.length;
-        final trendDiff = recentRate - earlyRate;
-        final recentPct = (recentRate * 100).round();
-        final earlyPct = (earlyRate * 100).round();
-        String trendBody; String trendTitle; String trendIcon;
-        if (trendDiff >= 0.2) {
-          trendTitle = "Strong Improvement"; trendIcon = "📈";
-          trendBody = "Your recent win rate is $recentPct%, up from $earlyPct% earlier. You are improving quickly. Keep building on what is working.";
-        } else if (trendDiff >= 0.1) {
-          trendTitle = "Improving Trend"; trendIcon = "📈";
-          trendBody = "Your recent win rate is $recentPct%, slightly ahead of $earlyPct% earlier. You are trending in the right direction. Consistency will be key.";
-        } else if (trendDiff <= -0.2) {
-          trendTitle = "Significant Dip"; trendIcon = "📉";
-          trendBody = "Your recent win rate is $recentPct%, down from $earlyPct% earlier. Something has changed. Reviewing your recent matches could help identify what to adjust.";
-        } else if (trendDiff <= -0.1) {
-          trendTitle = "Slight Dip in Form"; trendIcon = "📉";
-          trendBody = "Your recent win rate is $recentPct%, slightly down from $earlyPct% earlier. A small dip. Reflecting on recent matches could help you get back on track.";
-        } else {
-          trendTitle = ""; trendIcon = ""; trendBody = "";
-        }
-        if (trendBody.isNotEmpty) insights.add({"icon": trendIcon, "title": trendTitle, "body": trendBody, "tier": "premium"});
+      final recentRate = recentMatches.where((m) => _matchWinner(m) == "player").length / recentMatches.length;
+      final earlyRate = earlierMatches.where((m) => _matchWinner(m) == "player").length / earlierMatches.length;
+      final trendDiff = recentRate - earlyRate;
+      final recentPct = (recentRate * 100).round();
+      final earlyPct = (earlyRate * 100).round();
+      String trendBody = "Your win rate over your last 5 matches is $recentPct%, compared with $earlyPct% in the 5 matches before that.";
+      if (trendDiff >= 0.2) {
+        trendBody += " That's a noticeable positive shift in your recent results. Keep tracking to see if the trend continues.";
+      } else if (trendDiff <= -0.2) {
+        trendBody += " That's a noticeable change in your recent results. Your next few matches will help show whether it's a short-term dip or a developing trend.";
       }
+      insights.add({"icon": "📊", "title": "Recent vs Earlier Form", "body": trendBody, "tier": "premium"});
     }
 
     // ── Recent Form (premium) ──
