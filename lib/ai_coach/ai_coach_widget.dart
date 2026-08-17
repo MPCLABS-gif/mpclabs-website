@@ -540,30 +540,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       insights.add({"icon": "📊", "title": "Recent vs Earlier Form", "body": trendBody, "tier": "premium"});
     }
 
-    // ── Recent Form (premium) ──
-    if (completed.length >= 5) {
-      final last5Rate = completed.take(5).where((m) => _matchWinner(m) == "player").length / 5;
-      final formDiff = last5Rate - winRate;
-      final last5Pct = (last5Rate * 100).round();
-      final careerPct = (winRate * 100).round();
-      String formBody; String formTitle; String formIcon;
-      if (formDiff >= 0.2) {
-        formTitle = "Excellent Recent Form"; formIcon = "🔥";
-        formBody = "Your last 5 matches show a $last5Pct% win rate. Well above your overall average of $careerPct%. You are in strong form right now. Keep building on it.";
-      } else if (formDiff >= 0.1) {
-        formTitle = "Good Recent Form"; formIcon = "📈";
-        formBody = "Your last 5 matches show a $last5Pct% win rate. Ahead of your overall average of $careerPct%. Your recent form is encouraging. Keep the momentum going.";
-      } else if (formDiff <= -0.2) {
-        formTitle = "Poor Recent Form"; formIcon = "📉";
-        formBody = "Your last 5 matches show a $last5Pct% win rate. Below your overall average of $careerPct%. Your recent form needs attention. Reviewing recent matches could help identify what to adjust.";
-      } else if (formDiff <= -0.1) {
-        formTitle = "Slight Dip in Form"; formIcon = "📉";
-        formBody = "Your last 5 matches show a $last5Pct% win rate. Slightly below your overall average of $careerPct%. A small dip. Focus on getting back to your usual level.";
-      } else {
-        formTitle = ""; formIcon = ""; formBody = "";
-      }
-      if (formBody.isNotEmpty) insights.add({"icon": formIcon, "title": formTitle, "body": formBody, "tier": "premium"});
-    }
+    
 
     // ── Points Profile (premium) ──
     if (completed.length >= 3) {
