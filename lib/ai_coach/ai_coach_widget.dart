@@ -579,19 +579,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       final g2Pct = (g2Won / completed.length * 100).round();
       final g3Pct = g3PlayedList.isNotEmpty ? (g3WonCount / g3PlayedList.length * 100).round() : null;
       final g3Str = g3Pct != null ? "$g3Pct%" : "N/A";
-      String primaryLine = "Across your matches, you win $g1Pct% of first games, $g2Pct% of second games, and $g3Str of third games (${g3PlayedList.length} played).";
-      // Identify weakest and strongest. Prioritise weakest
-      String contextLine = "";
-      final rates = {"G1": g1Pct, "G2": g2Pct};
-      if (g3PlayedList.length >= 3 && g3Pct != null) rates["G3"] = g3Pct;
-      final weakest = rates.entries.reduce((a, b) => a.value <= b.value ? a : b).key;
-      final strongest = rates.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
-      if (weakest == "G1") contextLine = "Your opening game is your weakest area. Improving your start could have a big impact.";
-      else if (weakest == "G3") contextLine = "Deciding games are proving the most challenging. Focusing on fitness and concentration in the final game could help.";
-      else if (strongest == "G1") contextLine = "You start strongly. Maintaining that level across the match could improve your results.";
-      else if (strongest == "G2") contextLine = "You tend to grow into matches. Your second game is your strongest.";
-      else if (strongest == "G3") contextLine = "You finish strongly when matches go the distance. A good sign of resilience under pressure.";
-      insights.add({"icon": "🎯", "title": "Game-by-Game Breakdown", "body": "$primaryLine $contextLine".trim(), "tier": "premium"});
+      final primaryLine = "Across your matches, you win $g1Pct% of first games, $g2Pct% of second games, and $g3Str of third games (${g3PlayedList.length} played).";
+      insights.add({"icon": "🎯", "title": "Game-by-Game Breakdown", "body": primaryLine, "tier": "premium"});
     }
 
 
