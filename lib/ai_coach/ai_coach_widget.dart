@@ -590,21 +590,20 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       'Semi Final': 5, 'Quarter Final': 6, 'Round of 16': 7,
       'Round of 32': 8, 'Group Stage': 9, 'Did Not Place': 10, 'Withdrew': 11
     };
-
     final tournamentsWithResults = tournaments.where((t) => _bestDisciplineResult(t).isNotEmpty && _bestDisciplineResult(t) != 'Withdrew').toList();
     tournamentsWithResults.sort((a, b) => (a.date ?? DateTime(0)).compareTo(b.date ?? DateTime(0)));
-
     if (tournamentsWithResults.isNotEmpty) {
-      // Best Result
+      // Best Result (absorbs former Champion's Challenge for the Gold case)
       final bestT = tournamentsWithResults.reduce((a, b) =>
         (resultRanking[_bestDisciplineResult(a)] ?? 99) <= (resultRanking[_bestDisciplineResult(b)] ?? 99) ? a : b);
       final bestResult = _bestDisciplineResult(bestT);
       final bestCount = tournamentsWithResults.where((t) => _bestDisciplineResult(t) == bestResult).length;
       final bestCountStr = bestCount > 1 ? 'which you have reached $bestCount times' : 'your best performance so far';
-
       String bestBody;
       if (bestResult == 'Gold') {
-        bestBody = "You have won Gold in a tournament. That is a significant achievement. The challenge now is to maintain that level and defend your title at the next opportunity.";
+        final goldResults = tournamentsWithResults.where((t) => _bestDisciplineResult(t) == 'Gold').toList();
+        final goldTournamentName = goldResults.last.name;
+        bestBody = "You won Gold at $goldTournamentName — your best result so far. A standout result in your tournament history.";
       } else if (bestResult == 'Silver') {
         bestBody = "Your best result is a Silver medal, $bestCountStr. You have reached a Final and performed at the highest level. One more step to Gold.";
       } else if (bestResult == 'Bronze') {
@@ -612,30 +611,34 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       } else {
         bestBody = "Your best tournament result is a $bestResult, $bestCountStr. You are getting closer to a breakthrough and one more strong run could take you further.";
       }
-      insights.add({"icon": "🏆", "title": "Best Result", "body": bestBody, "tier": "pro"});
-
-      // Champion's Challenge
-      final goldResults = tournamentsWithResults.where((t) => _bestDisciplineResult(t) == 'Gold').toList();
-      if (goldResults.isNotEmpty) {
-        final goldName = goldResults.last.name;
-        insights.add({"icon": "🥇", "title": "Champion's Challenge", "body": "You won Gold at $goldName. The challenge now is repeating that performance under different opponents and conditions. Use it as the benchmark you are chasing in every tournament ahead.", "tier": "pro"});
-      }
+      insights.add({"icon": "🏆", "title": "Best Result", "body": bestBody, "tier": "pro", "category": "tournament", "priority": 3});
 
       // Finals Record
       final finals = tournamentsWithResults.where((t) => _bestDisciplineResult(t) == 'Gold' || _bestDisciplineResult(t) == 'Silver').toList();
       if (finals.length >= 2) {
         final wins = finals.where((t) => _bestDisciplineResult(t) == 'Gold').length;
-        insights.add({"icon": "🏅", "title": "Finals Record", "body": "You have reached ${finals.length} Finals and won $wins of them. You perform well when competing for titles.", "tier": "pro"});
+        insights.add({"icon": "🏅", "title": "Finals Record", "body": "You have reached ${finals.length} Finals and won $wins of them.", "tier": "pro", "category": "tournament", "priority": 3});
       }
 
-      // Medal Hunter
+      // Medal Record (renamed from Medal Hunter)
       final medals = tournamentsWithResults.where((t) => ['Gold', 'Silver', 'Bronze'].contains(_bestDisciplineResult(t))).toList();
       final last6 = tournamentsWithResults.length >= 6 ? tournamentsWithResults.sublist(tournamentsWithResults.length - 6) : tournamentsWithResults;
       final medalsInLast6 = last6.where((t) => ['Gold', 'Silver', 'Bronze'].contains(_bestDisciplineResult(t))).length;
       if (medals.length >= 3 || medalsInLast6 >= 2) {
-        insights.add({"icon": "🎯", "title": "Medal Hunter", "body": "You have earned medals in ${medals.length} of your last ${tournamentsWithResults.length} tournaments. You are regularly putting yourself in contention for the top positions.", "tier": "pro"});
+        insights.add({"icon": "🎯", "title": "Medal Record", "body": "You have earned medals in ${medals.length} of your last ${tournamentsWithResults.length} tournaments.", "tier": "pro", "category": "tournament", "priority": 3});
       }
 
+      // Bounce Back (recent, factual — only the most recent pair of tournaments, not full history)
+      if (tournamentsWithResults.length >= 2) {
+        final prevRank = resultRanking[_bestDisciplineResult(tournamentsWithResults[tournamentsWithResults.length - 2])] ?? 99;
+        final currResult = _bestDisciplineResult(tournamentsWithResults.last);
+        final currRank = resultRanking[currResult] ?? 99;
+        if (prevRank > 7 && currRank <= 6) {
+          insights.add({"icon": "💪", "title": "Bounce Back", "body": "After an early exit at your previous tournament, you reached the $currResult at your most recent one.", "tier": "pro", "category": "tournament", "priority": 1});
+        }
+      }
+
+      String? nextLevelTarget;
       if (tournamentsWithResults.length >= 3) {
         // Tournament Progression
         final last3 = tournamentsWithResults.sublist(tournamentsWithResults.length - 3);
@@ -644,9 +647,8 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         final rank2 = resultRanking[r2] ?? 99;
         final rank3 = resultRanking[r3] ?? 99;
         if (rank3 < rank2 && rank2 < rank1) {
-          insights.add({"icon": "📈", "title": "Tournament Progression", "body": "Your tournament performances are trending in the right direction. Across your last three tournaments, you progressed from the $r1 to the $r2 and then the $r3.", "tier": "pro"});
+          insights.add({"icon": "📈", "title": "Tournament Progression", "body": "Your last three tournament results have moved forward: $r1 → $r2 → $r3. That's positive momentum in your recent tournament results.", "tier": "pro", "category": "tournament", "priority": 1});
         }
-
         // Tournament Consistency
         final resultCounts = <String, int>{};
         for (final t in tournamentsWithResults) { final r = _bestDisciplineResult(t); resultCounts[r] = (resultCounts[r] ?? 0) + 1; }
@@ -654,48 +656,40 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         final summaryParts = resultCounts.entries.toList()
           ..sort((a, b) => (resultRanking[a.key] ?? 99).compareTo(resultRanking[b.key] ?? 99));
         final summaryStr = summaryParts.map((e) => 'the ${e.key} ${e.value} time${e.value > 1 ? "s" : ""}').join(', ');
-        insights.add({"icon": "📊", "title": "Tournament Consistency", "body": "Across ${tournamentsWithResults.length} tournaments, you have reached $summaryStr. The ${mostCommon.key} is currently your most common finishing stage.", "tier": "pro"});
-
+        insights.add({"icon": "📊", "title": "Tournament Consistency", "body": "Across ${tournamentsWithResults.length} tournaments, you have reached $summaryStr. The ${mostCommon.key} is currently your most common finishing stage.", "tier": "pro", "category": "tournament", "priority": 4});
         // Next Level Gap
         final mostCommonRank = resultRanking[mostCommon.key] ?? 99;
         final nextLevel = resultRanking.entries.where((e) => e.value == mostCommonRank - 1).map((e) => e.key).firstOrNull;
         if (nextLevel != null && mostCommonRank > 1) {
-          insights.add({"icon": "🎯", "title": "Next Level Gap", "body": "You are regularly reaching the ${mostCommon.key}. Winning just one more match in each tournament would move you into the $nextLevel. Focus on the moments that decide tight matches.", "tier": "pro"});
-        }
-
-        // Tournament Form
-        final last3Results = tournamentsWithResults.sublist(tournamentsWithResults.length - 3);
-        final allStrongForm = last3Results.every((t) => (resultRanking[_bestDisciplineResult(t)] ?? 99) <= 5);
-        if (allStrongForm) {
-          insights.add({"icon": "🔥", "title": "Tournament Form", "body": "You have reached the Semi Final or better in your last 3 consecutive tournaments. Your tournament form is currently strong.", "tier": "pro"});
-        }
-
-        // Bounce Back
-        for (int i = 1; i < tournamentsWithResults.length; i++) {
-          final prev = resultRanking[_bestDisciplineResult(tournamentsWithResults[i-1])] ?? 99;
-          final curr = resultRanking[_bestDisciplineResult(tournamentsWithResults[i])] ?? 99;
-          if (prev > 7 && curr <= 6) {
-            insights.add({"icon": "💪", "title": "Bounce Back Ability", "body": "After an early exit, you responded by reaching the ${_bestDisciplineResult(tournamentsWithResults[i])} or better in your next tournament. Strong players learn, adapt, and come back stronger.", "tier": "pro"});
-            break;
-          }
+          nextLevelTarget = nextLevel;
+          insights.add({"icon": "🎯", "title": "Next Level Gap", "body": "You are regularly reaching the ${mostCommon.key}. Winning just one more match in each tournament would move you into the $nextLevel.", "tier": "pro", "category": "tournament", "priority": 4});
         }
       }
 
-      // Breaking Through
-      if (tournamentsWithResults.length >= 4) {
-        final last4 = tournamentsWithResults.sublist(tournamentsWithResults.length - 4);
-        final stuckAtQF = last4.every((t) => _bestDisciplineResult(t) == 'Quarter Final');
-        if (stuckAtQF) {
-          insights.add({"icon": "🚀", "title": "Breaking Through", "body": "You have exited at the Quarter Final stage in your last 4 tournaments. The Semi Final is the next milestone to target in your progression. Focus on what changes in those deciding matches.", "tier": "pro"});
-        }
-      }
-
-      // Consistent Contender
+      // Tournament Form (merged with former Consistent Contender — matures as tournament history grows, mutually exclusive branches)
       if (tournamentsWithResults.length >= 7) {
         final last7 = tournamentsWithResults.sublist(tournamentsWithResults.length - 7);
         final qfOrBetter = last7.where((t) => (resultRanking[_bestDisciplineResult(t)] ?? 99) <= 6).length;
         if (qfOrBetter >= 6) {
-          insights.add({"icon": "⭐", "title": "Consistent Contender", "body": "You have reached at least the Quarter Final in $qfOrBetter of your last 7 tournaments. You are becoming a consistently competitive tournament player.", "tier": "pro"});
+          insights.add({"icon": "🔥", "title": "Tournament Form", "body": "You have reached at least the Quarter Final in $qfOrBetter of your last 7 tournaments.", "tier": "pro", "category": "tournament", "priority": 2});
+        }
+      } else if (tournamentsWithResults.length >= 3) {
+        final last3Results = tournamentsWithResults.sublist(tournamentsWithResults.length - 3);
+        final allStrongForm = last3Results.every((t) => (resultRanking[_bestDisciplineResult(t)] ?? 99) <= 5);
+        if (allStrongForm) {
+          insights.add({"icon": "🔥", "title": "Tournament Form", "body": "You have reached the Semi Final or better in your last 3 consecutive tournaments.", "tier": "pro", "category": "tournament", "priority": 2});
+        }
+      }
+
+      // Breaking Through (suppresses Next Level Gap when both would name Semi Final as the next milestone)
+      if (tournamentsWithResults.length >= 4) {
+        final last4 = tournamentsWithResults.sublist(tournamentsWithResults.length - 4);
+        final stuckAtQF = last4.every((t) => _bestDisciplineResult(t) == 'Quarter Final');
+        if (stuckAtQF) {
+          if (nextLevelTarget == 'Semi Final') {
+            insights.removeWhere((i) => i["title"] == "Next Level Gap");
+          }
+          insights.add({"icon": "🚀", "title": "Breaking Through", "body": "You have exited at the Quarter Final stage in your last 4 tournaments. The Semi Final is the next milestone in your progression.", "tier": "pro", "category": "tournament", "priority": 1});
         }
       }
     }
@@ -762,6 +756,20 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
       insights.insert(1, {"icon": strengthIcon, "title": strengthTitle, "body": strengthBody, "tier": "free"});
     }
+
+    // Calculate richly, display selectively: cap tournament-category insights to the
+    // top 3 by priority, using original order as a tiebreaker within the same priority.
+    final tournamentEntries = <MapEntry<int, Map<String, dynamic>>>[];
+    for (int i = 0; i < insights.length; i++) {
+      if (insights[i]["category"] == "tournament") tournamentEntries.add(MapEntry(i, insights[i]));
+    }
+    tournamentEntries.sort((a, b) {
+      final pa = a.value["priority"] as int;
+      final pb = b.value["priority"] as int;
+      return pa != pb ? pa.compareTo(pb) : a.key.compareTo(b.key);
+    });
+    final keepTournament = tournamentEntries.take(3).map((e) => e.value).toSet();
+    insights.removeWhere((i) => i["category"] == "tournament" && !keepTournament.contains(i));
 
     return insights;
   }
