@@ -693,68 +693,77 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         }
       }
     }
-    // ── Top Improvement Area (free, inserted at front) ──
+    // ── Performance Focus & Positive Pattern (free) ──
+    // "Calculate richly, display selectively": each candidate must clear the same evidence
+    // threshold as its own dedicated insight elsewhere in this file. No fallback — if nothing
+    // genuinely qualifies, the card is simply omitted rather than manufacturing an insight.
     if (completed.length >= 5) {
-      String topTitle = "Top Improvement Area";
-      String topBody = "";
-      String topIcon = "🎯";
+      int closeGamesTotalF = 0, closeGamesWonF = 0;
+      for (final m in completed) {
+        final games = [
+          [m.g1Player, m.g1Opponent],
+          [m.g2Player, m.g2Opponent],
+          [m.g3Player, m.g3Opponent],
+        ];
+        for (final g in games) {
+          final p = g[0]; final o = g[1];
+          if (p == 0 && o == 0) continue;
+          if ((p - o).abs() <= 3) {
+            closeGamesTotalF++;
+            if (p > o) closeGamesWonF++;
+          }
+        }
+      }
+      double? closeRateF;
+      if (closeGamesTotalF >= 5) closeRateF = closeGamesWonF / closeGamesTotalF;
 
-      // Find the biggest weakness
-      final winRate2 = completed.isNotEmpty ? completed.where((m) => _matchWinner(m) == "player").length / completed.length : 0.0;
-      final closeGames = completed.where((m) {
-        final g1diff = (m.g1Player - m.g1Opponent).abs();
-        final g2diff = (m.g2Player - m.g2Opponent).abs();
-        final g3diff = (m.g3Player - m.g3Opponent).abs();
-        return g1diff <= 3 || g2diff <= 3 || (g3diff <= 3 && (m.g3Player > 0 || m.g3Opponent > 0));
-      }).toList();
-      final closeWins = closeGames.where((m) => _matchWinner(m) == "player").length;
-      final closeRate = closeGames.isNotEmpty ? closeWins / closeGames.length : 1.0;
-
-      final comebackMatches = completed.where((m) => m.g1Player < m.g1Opponent).toList();
-      final comebackWins = comebackMatches.where((m) => _matchWinner(m) == "player").length;
-      final comebackRate = comebackMatches.isNotEmpty ? comebackWins / comebackMatches.length : 1.0;
-
-      if (closeRate < 0.35 && closeGames.length >= 3) {
-        final currentWinPct = (winRate2 * 100).round();
-        final projectedWins = (closeGames.length * 0.5).round();
-        final projectedRate = ((completed.where((m) => _matchWinner(m) == "player").length + projectedWins - closeWins) / completed.length * 100).round();
-        topBody = "Improve your performance in close games. Winning just a few more tight matches would increase your overall win rate from $currentWinPct% to around $projectedRate%.";
-      } else if (comebackRate < 0.2 && comebackMatches.length >= 3) {
-        topBody = "Improve your comeback rate after losing Game 1. You currently recover to win only ${(comebackRate * 100).round()}% of those matches. Stronger starts and better between-game adjustments could make a big difference.";
-      } else if (winRate2 < 0.4) {
-        topBody = "Focus on converting your close losses into wins. Identifying patterns in your defeats and adjusting your tactics could significantly improve your overall results.";
-      } else {
-        topBody = "Push yourself against stronger opponents. Your consistency is a strength. Testing yourself at a higher level will accelerate your improvement.";
+      final lostG1F = completed.where((m) => m.g1Player < m.g1Opponent).toList();
+      double? comebackRateF;
+      if (lostG1F.length >= 5) {
+        final comebackWinsF = lostG1F.where((m) => _matchWinner(m) == "player").length;
+        comebackRateF = comebackWinsF / lostG1F.length;
       }
 
-      insights.insert(0, {"icon": topIcon, "title": topTitle, "body": topBody, "tier": "free"});
-    }
-
-    // ── Current Strength (free) ──
-    if (completed.length >= 5) {
-      String strengthTitle = "Current Strength";
-      String strengthBody = "";
-      String strengthIcon = "⭐";
-
-      final winRate3 = completed.isNotEmpty ? completed.where((m) => _matchWinner(m) == "player").length / completed.length : 0.0;
-      final g1WonCount = completed.where((m) => m.g1Player > m.g1Opponent).length;
-      final g1WinPct = (g1WonCount / completed.length * 100).round();
-
-      final comebackMatches2 = completed.where((m) => m.g1Player < m.g1Opponent).toList();
-      final comebackWins2 = comebackMatches2.where((m) => _matchWinner(m) == "player").length;
-      final comebackRate2 = comebackMatches2.isNotEmpty ? comebackWins2 / comebackMatches2.length : 0.0;
-
-      if (g1WinPct >= 60) {
-        strengthBody = "You win $g1WinPct% of matches when taking the first game. Strong starts are becoming a key strength of your game. Keep applying pressure early.";
-      } else if (comebackRate2 >= 0.5 && comebackMatches2.length >= 3) {
-        strengthBody = "You recover to win ${(comebackRate2 * 100).round()}% of matches after losing Game 1. Your resilience under pressure is a genuine competitive strength.";
-      } else if (winRate3 >= 0.6) {
-        strengthBody = "You win ${(winRate3 * 100).round()}% of your matches. Your overall consistency is your biggest strength right now. Keep building on it.";
-      } else {
-        strengthBody = "You are tracking and analysing your game. Players who measure their performance improve faster. That discipline is already a strength.";
+      double? firstGameRateF;
+      if (completed.length >= 8) {
+        final g1WonF = completed.where((m) => m.g1Player > m.g1Opponent).length;
+        firstGameRateF = g1WonF / completed.length;
       }
 
-      insights.insert(1, {"icon": strengthIcon, "title": strengthTitle, "body": strengthBody, "tier": "free"});
+      Map<String, dynamic>? focusCandidate;
+      if (focusCandidate == null && closeRateF != null && closeRateF < 0.35) {
+        final pct = (closeRateF * 100).round();
+        focusCandidate = {"icon": "🎯", "title": "Performance Focus", "body": "You have won $pct% of your close games (decided by 3 points or fewer), based on $closeGamesTotalF such games. That's a pattern worth exploring — what could help you feel clearer and more decisive in those tight moments?", "tier": "free"};
+      }
+      if (focusCandidate == null && comebackRateF != null && comebackRateF < 0.3) {
+        final pct = (comebackRateF * 100).round();
+        focusCandidate = {"icon": "🎯", "title": "Performance Focus", "body": "After losing Game 1, you have won $pct% of those matches (${lostG1F.length} qualifying). That's worth exploring — what helps you reset and start Game 2 with a clear plan?", "tier": "free"};
+      }
+      if (focusCandidate == null && firstGameRateF != null && firstGameRateF < 0.4) {
+        final pct = (firstGameRateF * 100).round();
+        focusCandidate = {"icon": "🎯", "title": "Performance Focus", "body": "You have won $pct% of your first games across ${completed.length} matches. That's a pattern worth exploring — what could help you feel sharper from the very first point?", "tier": "free"};
+      }
+
+      Map<String, dynamic>? positiveCandidate;
+      if (positiveCandidate == null && closeRateF != null && closeRateF >= 0.6) {
+        final pct = (closeRateF * 100).round();
+        positiveCandidate = {"icon": "⭐", "title": "Positive Pattern", "body": "You have won $pct% of your close games (decided by 3 points or fewer), based on $closeGamesTotalF such games. That's a positive pattern — you're finding ways to come through when matches get tight.", "tier": "free"};
+      }
+      if (positiveCandidate == null && comebackRateF != null && comebackRateF >= 0.5) {
+        final pct = (comebackRateF * 100).round();
+        positiveCandidate = {"icon": "⭐", "title": "Positive Pattern", "body": "After losing Game 1, you have recovered to win $pct% of those matches (${lostG1F.length} qualifying). That's a positive pattern — worth noticing what helps you reset and respond.", "tier": "free"};
+      }
+      if (positiveCandidate == null && firstGameRateF != null && firstGameRateF >= 0.6) {
+        final pct = (firstGameRateF * 100).round();
+        positiveCandidate = {"icon": "⭐", "title": "Positive Pattern", "body": "You have won $pct% of your first games across ${completed.length} matches. That's a positive pattern — worth noticing what helps you start matches well.", "tier": "free"};
+      }
+
+      final frontInsights = <Map<String, dynamic>>[];
+      if (focusCandidate != null) frontInsights.add(focusCandidate);
+      if (positiveCandidate != null) frontInsights.add(positiveCandidate);
+      for (int i = frontInsights.length - 1; i >= 0; i--) {
+        insights.insert(0, frontInsights[i]);
+      }
     }
 
     // Calculate richly, display selectively: cap tournament-category insights to the
