@@ -542,7 +542,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
 
     
 
-    // ── Points Profile (premium) ──
+    // ── Points Scored vs Conceded (premium) ──
     if (completed.length >= 3) {
       int totalScored = 0, totalConceded = 0, gameCount = 0;
       for (final m in completed) {
@@ -553,27 +553,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (gameCount >= 5) {
         final avgScored = totalScored / gameCount;
         final avgConceded = totalConceded / gameCount;
-        final ptDiff = avgScored - avgConceded;
         final scoredStr = avgScored.toStringAsFixed(1);
         final concededStr = avgConceded.toStringAsFixed(1);
-        String ptBody; String ptTitle;
-        if (ptDiff >= 5) {
-          ptTitle = "Points Dominant";
-          ptBody = "You average $scoredStr points scored vs $concededStr conceded per game. You are controlling the points consistently. Your game is in a strong place.";
-        } else if (ptDiff >= 2) {
-          ptTitle = "Competitive Edge";
-          ptBody = "You average $scoredStr points scored vs $concededStr conceded per game. You have a small edge. Maintaining consistency in key moments can turn this into more wins.";
-        } else if (ptDiff >= -1) {
-          ptTitle = "Tight Matches";
-          ptBody = "You average $scoredStr points scored vs $concededStr conceded per game. Matches are very close. Small moments are deciding the outcome.";
-        } else if (ptDiff >= -4) {
-          ptTitle = "Slightly Behind";
-          ptBody = "You average $scoredStr points scored vs $concededStr conceded per game. Opponents have a slight edge. Tightening key areas could help close the gap.";
-        } else {
-          ptTitle = "Points Gap";
-          ptBody = "You average $scoredStr points scored vs $concededStr conceded per game. There is a clear gap. Focusing on reducing errors and building consistency could help improve results.";
-        }
-        if (ptDiff.abs() >= 2) insights.add({"icon": "📊", "title": ptTitle, "body": ptBody, "tier": "premium"});
+        final ptBody = "You average $scoredStr points scored and $concededStr points conceded per game.";
+        insights.add({"icon": "📊", "title": "Points Scored vs Conceded", "body": ptBody, "tier": "premium"});
       }
     }
 
