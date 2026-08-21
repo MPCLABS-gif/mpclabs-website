@@ -176,7 +176,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     } else if (winRate >= 0.5) {
       insights.add({"icon": "📈", "title": "Positive Results", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches — more wins than losses. A solid foundation, and there's more to learn as you keep playing and tracking.", "tier": "free"});
     } else if (winRate >= 0.3) {
-      insights.add({"icon": "💪", "title": "Developing Results", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. You're building experience and results with every match you log.", "tier": "free"});
+      insights.add({"icon": "💪", "title": "Developing Results", "body": "You have won ${(winRate * 100).round()}% of your ${completed.length} recorded matches. Every match adds to the picture of your performance and gives you more to learn from.", "tier": "free"});
     } else {
       insights.add({"icon": "🌱", "title": "Building Results", "body": "You are winning ${(winRate * 100).round()}% of your ${completed.length} matches. Every match you log adds to the picture — keep playing and tracking to unlock more insights.", "tier": "free"});
     }
@@ -200,11 +200,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       });
       if (bestMood != null) {
         final pct = (bestRate * 100).round();
-        final moodBody = "Your strongest results have come in matches where you recorded feeling $bestMood, winning $pct% of your $bestTotal matches recorded in that mood. Think about what else was consistent before those matches, such as your preparation, warm-up or match routine. The goal isn't to recreate a feeling, but to build routines that help you perform at your best.";
-        insights.add({"icon": "🧠", "title": "Mood & Performance", "body": moodBody, "tier": "free"});
+        String moodBody;
         if (worstMoodFree != null && worstMoodFree != bestMood && worstRateFree < winRate) {
-          insights.add({"icon": "⚡", "title": "Mood to Watch", "body": "Your results have been less successful in matches where you recorded feeling $worstMoodFree. This is worth reflecting on—not because the mood caused the result, but because it may highlight something in your preparation, routines or mindset that you can strengthen.", "tier": "free"});
+          moodBody = "Your strongest results have come when you recorded feeling $bestMood — winning $pct% of those matches. Your results have been lower when you recorded feeling $worstMoodFree. That doesn't mean either feeling caused the result. Look at what else differed in your preparation, warm-up or routine between the two.";
+        } else {
+          moodBody = "Your strongest results have come when you recorded feeling $bestMood — winning $pct% of those matches. Rather than trying to recreate a feeling, look for what else was consistent: your preparation, warm-up or routine.";
         }
+        insights.add({"icon": "🧠", "title": "Mood & Performance", "body": moodBody, "tier": "free"});
       }
     }
 
