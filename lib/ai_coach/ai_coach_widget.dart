@@ -205,8 +205,6 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         if (worstMoodFree != null && worstMoodFree != bestMood && worstRateFree < winRate) {
           insights.add({"icon": "⚡", "title": "Mood to Watch", "body": "Your results have been less successful in matches where you recorded feeling $worstMoodFree. This is worth reflecting on—not because the mood caused the result, but because it may highlight something in your preparation, routines or mindset that you can strengthen.", "tier": "free"});
         }
-      } else {
-        insights.add({"icon": "🧠", "title": "Mood & Performance", "body": "We need at least 5 matches recorded in the same mood before we can identify a meaningful pattern. Keep logging your pre-match mood to unlock this insight.", "tier": "free"});
       }
     }
 
@@ -277,13 +275,13 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (last30 >= 6) {
         freqBody = "You have played $last30 matches in the last 30 days. You have been competing regularly and building a useful record of your recent performances.";
       } else if (last30 >= 4) {
-        freqBody = "You have played $last30 matches in the last 30 days. Good consistency. Regular play like this helps you build and maintain your level.";
+        freqBody = "You have played $last30 matches in the last 30 days — a solid recent sample for your AI Coach to work with.";
       } else if (last30 >= 2) {
-        freqBody = "You have played $last30 matches in the last 30 days. A steady start. Try to increase your frequency to keep your game sharp.";
+        freqBody = "You have played $last30 matches in the last 30 days. Every match you log adds to what your AI Coach can tell you.";
       } else if (last30 == 1) {
-        freqBody = "You have played 1 match in the last 30 days. Playing more regularly will help you improve faster. Even one extra match per week can make a difference.";
+        freqBody = "You have played 1 match in the last 30 days.";
       } else {
-        freqBody = "No matches recorded in the last 30 days. Getting back on court is the most important step to improving your game.";
+        freqBody = "No matches recorded in the last 30 days.";
       }
       String trendAdd = "";
       if (recent15 > prev15 && prev15 > 0) trendAdd = " You have played more matches in the most recent 15 days than in the previous 15.";
@@ -893,7 +891,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text("See exactly why you win and lose", style: GoogleFonts.interTight(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
+            Text("Discover the patterns behind your performance", style: GoogleFonts.interTight(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15)),
             const SizedBox(height: 4),
             Text(
               matchCount >= 5
@@ -952,7 +950,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text("Most players never realise this about their game", style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 11, fontStyle: FontStyle.italic)),
+          child: Text("Your match data can reveal patterns that are easy to miss", style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 11, fontStyle: FontStyle.italic)),
         ),
         const SizedBox(height: 12),
         Padding(
