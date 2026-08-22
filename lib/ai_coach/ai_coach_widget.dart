@@ -368,9 +368,19 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
       final ratio = switches / (sample.length - 1);
       final timeWord = switches == 1 ? "time" : "times";
-      String consBody = "Across your last ${sample.length} matches, your results switched between a win and a loss $switches $timeWord.";
-      if (ratio > 0.55) {
-        consBody += " Results can vary for many reasons, including opponent level, match setting and preparation. Every match you log adds another piece to the picture, helping you understand your game with greater confidence.";
+      String consBody;
+      if (switches == 0) {
+        final allWon = _matchWinner(sample[0]) == "player";
+        if (allWon) {
+          consBody = "Your recent results have been highly consistent — your last ${sample.length} matches were all wins.";
+        } else {
+          consBody = "Your last ${sample.length} matches have all ended in losses. That's a clear recent pattern, and your next few matches will help show how it develops.";
+        }
+      } else {
+        consBody = "Across your last ${sample.length} matches, your results switched between a win and a loss $switches $timeWord.";
+        if (ratio > 0.55) {
+          consBody += " Results can vary for many reasons, including opponent level, match setting and preparation. Every match you log adds another piece to the picture, helping you understand your game with greater confidence.";
+        }
       }
       // Add-on: compare recent 5 vs earlier 5 consistency
       String consAddOn = "";
@@ -425,7 +435,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (closedRate < 0.7) {
         closeBody += " Consider what helps you stay locked in and keep your game plan once you're ahead.";
       }
-      insights.add({"icon": "😤", "title": "Results After Winning Game 1", "body": closeBody, "tier": "pro"});
+      insights.add({"icon": "🔒", "title": "Results After Winning Game 1", "body": closeBody, "tier": "pro"});
     }
 
     // ── Head-to-Head Record (pro) ──
@@ -526,16 +536,29 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     if (sortedByDate.length >= 10) {
       final recentMatches = sortedByDate.reversed.take(5).toList();
       final earlierMatches = sortedByDate.reversed.skip(5).take(5).toList();
-      final recentRate = recentMatches.where((m) => _matchWinner(m) == "player").length / recentMatches.length;
-      final earlyRate = earlierMatches.where((m) => _matchWinner(m) == "player").length / earlierMatches.length;
+      final recentWins = recentMatches.where((m) => _matchWinner(m) == "player").length;
+      final earlyWins = earlierMatches.where((m) => _matchWinner(m) == "player").length;
+      final recentRate = recentWins / recentMatches.length;
+      final earlyRate = earlyWins / earlierMatches.length;
       final trendDiff = recentRate - earlyRate;
       final recentPct = (recentRate * 100).round();
       final earlyPct = (earlyRate * 100).round();
-      String trendBody = "Your win rate over your last 5 matches is $recentPct%, compared with $earlyPct% in the 5 matches before that.";
-      if (trendDiff >= 0.2) {
-        trendBody += " That's a noticeable positive shift in your recent results. Keep tracking to see if the trend continues.";
-      } else if (trendDiff <= -0.2) {
-        trendBody += " That's a noticeable change in your recent results. Your next few matches will help show whether it's a short-term dip or a developing trend.";
+      String trendBody;
+      if (recentPct == earlyPct) {
+        if (recentWins == 5) {
+          trendBody = "Your recent form has held steady — you won all 5 of your latest matches and all 5 of the 5 before that.";
+        } else if (recentWins == 0) {
+          trendBody = "Your recent form has held steady — you lost all 5 of your latest matches and all 5 of the 5 before that. Worth reflecting on what's consistent across these results and choosing one area to focus on.";
+        } else {
+          trendBody = "Your recent form has held steady, winning $recentWins of your last 5 matches and $recentWins of the 5 before that.";
+        }
+      } else {
+        trendBody = "Your win rate over your last 5 matches is $recentPct%, compared with $earlyPct% in the 5 matches before that.";
+        if (trendDiff >= 0.2) {
+          trendBody += " That's a noticeable positive shift in your recent results. Keep tracking to see if the trend continues.";
+        } else if (trendDiff <= -0.2) {
+          trendBody += " That's a noticeable change in your recent results. Your next few matches will help show whether it's a short-term dip or a developing trend.";
+        }
       }
       insights.add({"icon": "📊", "title": "Recent vs Earlier Form", "body": trendBody, "tier": "premium"});
     }
@@ -742,37 +765,49 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
 
       Map<String, dynamic>? focusCandidate;
-      bool focusIsFirstGame = false;
+      String? focusCandidateType;
       if (focusCandidate == null && closeRateF != null && closeRateF < 0.35) {
         final pct = (closeRateF * 100).round();
         focusCandidate = {"icon": "🎯", "title": "Performance Focus", "body": "You have won $pct% of your close games (decided by 3 points or fewer), based on $closeGamesTotalF such games. That's a pattern worth exploring — what could help you feel clearer and more decisive in those tight moments?", "tier": "free"};
+        focusCandidateType = "close";
       }
       if (focusCandidate == null && comebackRateF != null && comebackRateF < 0.3) {
         final pct = (comebackRateF * 100).round();
         focusCandidate = {"icon": "🎯", "title": "Performance Focus", "body": "After losing Game 1, you have won $pct% of those matches (${lostG1F.length} qualifying). That's worth exploring — what helps you reset and start Game 2 with a clear plan?", "tier": "free"};
+        focusCandidateType = "comeback";
       }
       if (focusCandidate == null && firstGameRateF != null && firstGameRateF < 0.4) {
         final pct = (firstGameRateF * 100).round();
         focusCandidate = {"icon": "🎯", "title": "Performance Focus", "body": "You have won $pct% of your first games across ${completed.length} matches. That's a pattern worth exploring — what could help you feel sharper from the very first point?", "tier": "free"};
-        focusIsFirstGame = true;
+        focusCandidateType = "firstGame";
       }
       Map<String, dynamic>? positiveCandidate;
-      bool positiveIsFirstGame = false;
+      String? positiveCandidateType;
       if (positiveCandidate == null && closeRateF != null && closeRateF >= 0.6) {
         final pct = (closeRateF * 100).round();
         positiveCandidate = {"icon": "⭐", "title": "Positive Pattern", "body": "You have won $pct% of your close games (decided by 3 points or fewer), based on $closeGamesTotalF such games. That's a positive pattern — you're finding ways to come through when matches get tight.", "tier": "free"};
+        positiveCandidateType = "close";
       }
       if (positiveCandidate == null && comebackRateF != null && comebackRateF >= 0.5) {
         final pct = (comebackRateF * 100).round();
         positiveCandidate = {"icon": "⭐", "title": "Positive Pattern", "body": "After losing Game 1, you have recovered to win $pct% of those matches (${lostG1F.length} qualifying). That's a positive pattern — worth noticing what helps you reset and respond.", "tier": "free"};
+        positiveCandidateType = "comeback";
       }
       if (positiveCandidate == null && firstGameRateF != null && firstGameRateF >= 0.6) {
         final pct = (firstGameRateF * 100).round();
         positiveCandidate = {"icon": "⭐", "title": "Positive Pattern", "body": "You have won $pct% of your first games across ${completed.length} matches. That's a positive pattern — worth noticing what helps you start matches well.", "tier": "free"};
-        positiveIsFirstGame = true;
+        positiveCandidateType = "firstGame";
       }
-      if (focusIsFirstGame || positiveIsFirstGame) {
-        insights.removeWhere((i) => i["title"] == "First Game Results");
+      const candidateTypeToTitle = {
+        "close": "Close Game Performance",
+        "comeback": "Results After Losing Game 1",
+        "firstGame": "First Game Results",
+      };
+      final suppressTitles = <String>{};
+      if (focusCandidateType != null) suppressTitles.add(candidateTypeToTitle[focusCandidateType]!);
+      if (positiveCandidateType != null) suppressTitles.add(candidateTypeToTitle[positiveCandidateType]!);
+      if (suppressTitles.isNotEmpty) {
+        insights.removeWhere((i) => suppressTitles.contains(i["title"]));
       }
       final frontInsights = <Map<String, dynamic>>[];
       if (focusCandidate != null) frontInsights.add(focusCandidate);
