@@ -107,6 +107,7 @@ class MatchesRecord extends FirestoreRecord {
     _ownerUid = snapshotData['ownerUid'] as String?;
     _playerName = snapshotData['PlayerName'] as String?;
     _opponentName = snapshotData['OpponentName'] as String?;
+    _opponentHandedness = snapshotData['opponentHandedness'] as String?;
     _matchDate = snapshotData['matchDate'] as DateTime?;
     _notes = snapshotData['notes'] as String?;
     _matchType = snapshotData['matchType'] as String?;
@@ -179,9 +180,10 @@ Map<String, dynamic> createMatchesRecordData({
 }) {
   final firestoreData = mapToFirestore(
     <String, dynamic>{
-      'ownerUid': ownerUid,
+            'ownerUid': ownerUid,
       'PlayerName': playerName,
       'OpponentName': opponentName,
+      'opponentHandedness': opponentHandedness,
       'matchDate': matchDate,
       'notes': notes,
       'matchType': matchType,
