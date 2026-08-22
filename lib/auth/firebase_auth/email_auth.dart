@@ -9,8 +9,17 @@ Future<UserCredential?> registerWithEmail({
   required String password,
   String accountType = 'player',
 }) async {
-  final credential = await FirebaseAuth.instance
-      .createUserWithEmailAndPassword(email: email, password: password);
+  final currentUser = FirebaseAuth.instance.currentUser;
+  final UserCredential credential;
+  if (currentUser != null && currentUser.isAnonymous) {
+    // Upgrade the existing anonymous session in place so matches/tournaments
+    // already logged under this UID (ownerUid) aren't orphaned.
+    final emailCredential = EmailAuthProvider.credential(email: email, password: password);
+    credential = await currentUser.linkWithCredential(emailCredential);
+  } else {
+    credential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(email: email, password: password);
+  }
   final user = credential.user;
   if (user != null) {
     await user.updateDisplayName(name);
