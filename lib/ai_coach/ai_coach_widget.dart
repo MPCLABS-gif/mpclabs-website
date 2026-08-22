@@ -572,14 +572,24 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
     // ── Game-by-Game Breakdown (premium) ──
     if (completed.length >= 5) {
       final g1Won = completed.where((m) => m.g1Player > m.g1Opponent).length;
-      final g2Won = completed.where((m) => m.g2Player > m.g2Opponent).length;
+      final g1Pct = (g1Won / completed.length * 100).round();
+      final g2PlayedList = completed.where((m) => m.g2Player > 0 || m.g2Opponent > 0).toList();
+      final g2WonCount = g2PlayedList.where((m) => m.g2Player > m.g2Opponent).length;
+      final g2Pct = g2PlayedList.isNotEmpty ? (g2WonCount / g2PlayedList.length * 100).round() : null;
       final g3PlayedList = completed.where((m) => m.g3Player > 0 || m.g3Opponent > 0).toList();
       final g3WonCount = g3PlayedList.where((m) => m.g3Player > m.g3Opponent).length;
-      final g1Pct = (g1Won / completed.length * 100).round();
-      final g2Pct = (g2Won / completed.length * 100).round();
       final g3Pct = g3PlayedList.isNotEmpty ? (g3WonCount / g3PlayedList.length * 100).round() : null;
-      final g3Str = g3Pct != null ? "$g3Pct%" : "N/A";
-      final primaryLine = "Across your matches, you win $g1Pct% of first games, $g2Pct% of second games, and $g3Str of third games (${g3PlayedList.length} played).";
+      final gameClauses = <String>["$g1Pct% of first games"];
+      if (g2Pct != null) gameClauses.add("$g2Pct% of second games");
+      if (g3Pct != null) gameClauses.add("$g3Pct% of third games");
+      String primaryLine;
+      if (gameClauses.length == 1) {
+        primaryLine = "Across your matches, you win ${gameClauses[0]}.";
+      } else if (gameClauses.length == 2) {
+        primaryLine = "Across your matches, you win ${gameClauses[0]} and ${gameClauses[1]}.";
+      } else {
+        primaryLine = "Across your matches, you win ${gameClauses[0]}, ${gameClauses[1]}, and ${gameClauses[2]}.";
+      }
       insights.add({"icon": "🎯", "title": "Game-by-Game Breakdown", "body": primaryLine, "tier": "premium"});
     }
 
@@ -731,6 +741,7 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       }
 
       Map<String, dynamic>? focusCandidate;
+      bool focusIsFirstGame = false;
       if (focusCandidate == null && closeRateF != null && closeRateF < 0.35) {
         final pct = (closeRateF * 100).round();
         focusCandidate = {"icon": "🎯", "title": "Performance Focus", "body": "You have won $pct% of your close games (decided by 3 points or fewer), based on $closeGamesTotalF such games. That's a pattern worth exploring — what could help you feel clearer and more decisive in those tight moments?", "tier": "free"};
@@ -742,9 +753,10 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (focusCandidate == null && firstGameRateF != null && firstGameRateF < 0.4) {
         final pct = (firstGameRateF * 100).round();
         focusCandidate = {"icon": "🎯", "title": "Performance Focus", "body": "You have won $pct% of your first games across ${completed.length} matches. That's a pattern worth exploring — what could help you feel sharper from the very first point?", "tier": "free"};
+        focusIsFirstGame = true;
       }
-
       Map<String, dynamic>? positiveCandidate;
+      bool positiveIsFirstGame = false;
       if (positiveCandidate == null && closeRateF != null && closeRateF >= 0.6) {
         final pct = (closeRateF * 100).round();
         positiveCandidate = {"icon": "⭐", "title": "Positive Pattern", "body": "You have won $pct% of your close games (decided by 3 points or fewer), based on $closeGamesTotalF such games. That's a positive pattern — you're finding ways to come through when matches get tight.", "tier": "free"};
@@ -756,8 +768,11 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       if (positiveCandidate == null && firstGameRateF != null && firstGameRateF >= 0.6) {
         final pct = (firstGameRateF * 100).round();
         positiveCandidate = {"icon": "⭐", "title": "Positive Pattern", "body": "You have won $pct% of your first games across ${completed.length} matches. That's a positive pattern — worth noticing what helps you start matches well.", "tier": "free"};
+        positiveIsFirstGame = true;
       }
-
+      if (focusIsFirstGame || positiveIsFirstGame) {
+        insights.removeWhere((i) => i["title"] == "First Game Results");
+      }
       final frontInsights = <Map<String, dynamic>>[];
       if (focusCandidate != null) frontInsights.add(focusCandidate);
       if (positiveCandidate != null) frontInsights.add(positiveCandidate);
