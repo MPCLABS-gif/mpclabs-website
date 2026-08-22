@@ -582,15 +582,16 @@ class _AiCoachWidgetState extends State<AiCoachWidget> {
       final gameClauses = <String>["$g1Pct% of first games"];
       if (g2Pct != null) gameClauses.add("$g2Pct% of second games");
       if (g3Pct != null) gameClauses.add("$g3Pct% of third games");
-      String primaryLine;
-      if (gameClauses.length == 1) {
-        primaryLine = "Across your matches, you win ${gameClauses[0]}.";
-      } else if (gameClauses.length == 2) {
-        primaryLine = "Across your matches, you win ${gameClauses[0]} and ${gameClauses[1]}.";
-      } else {
-        primaryLine = "Across your matches, you win ${gameClauses[0]}, ${gameClauses[1]}, and ${gameClauses[2]}.";
+      // Comparison across stages of a match only makes sense with at least two game positions.
+      if (gameClauses.length >= 2) {
+        String primaryLine;
+        if (gameClauses.length == 2) {
+          primaryLine = "Across your matches, you win ${gameClauses[0]} and ${gameClauses[1]}.";
+        } else {
+          primaryLine = "Across your matches, you win ${gameClauses[0]}, ${gameClauses[1]}, and ${gameClauses[2]}.";
+        }
+        insights.add({"icon": "🎯", "title": "Game-by-Game Breakdown", "body": primaryLine, "tier": "premium"});
       }
-      insights.add({"icon": "🎯", "title": "Game-by-Game Breakdown", "body": primaryLine, "tier": "premium"});
     }
 
 
